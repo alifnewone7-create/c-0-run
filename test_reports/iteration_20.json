@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only verification for Coco AI (Next.js production build): redesigned upgrade gate, dashboard tier card, news signals detail sheet with drag-to-dismiss, and management page. All requested testids exist and behave correctly on both desktop (1920px) and mobile (390px). Premium tier restored at end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Upgrade gate backdrop close", "issue": "Clicking the upgrade-gate-backdrop element via Playwright at its center does not close the sheet on desktop (1920px). The backdrop is a full-viewport <button> and the .ug-sheet sits above it at the center, so a center click lands on the sheet. User clicks in the visible backdrop area DO close the sheet (Escape and X buttons close correctly, and mobile drag-down works). This is a testing-only observation; not a functional bug for real users. Consider adding stopPropagation on sheet and/or using pointer-events pattern so the [data-testid] centroid is not covered.", "affected_selectors": ["[data-testid=\"upgrade-gate-backdrop\"]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "upgrade-gate-backdrop is a full-viewport <button> visually covered at its centroid by .ug-sheet; automated tests that target the backdrop centroid can't dismiss it. Adding an explicit outside-click handler on ug-root (excluding sheet) would be more testable and semantically cleaner than a hidden button.",
+    "components/management-view.tsx is 470+ lines and mixes Field/MtgToggle/ProgressPanel/TradeSheet/Row/Celebration — consider splitting for maintainability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% (all requested flows pass)"},
+  "test_credentials": "menutest.coco@example.com / CocoTest#2026 (tier restored to premium). Admin API: iamhear/iamhear/iamhear.",
+  "seed_data_creation": "None. Toggled tier free→premium via /api/admin/set-tier during test; restored to premium at end (verified via dashboard shows 'Premium' + 'Upgrade Plan').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All original requested testids exist and pass. Verified: (1) Login redirects to /dashboard. (2) Dashboard premium: tier-upgrade-link='Upgrade Plan', no tier-upgrade-icon. (3) News signals desktop: hero, stats, event/fundamental tabs, detail open/close all work; fundamental cards open same detail. (4) Mobile news detail drag-down via .tl-modal-grab inside [data-drag-handle] dismisses sheet (>150px). No horizontal overflow at 390px (excluding known glow orbs). (5) Management premium: preview appears after filling capital/payout/target/risk; generate creates sheet with progress/stats/rows; row-1 win updates PnL to +$8.50 and wins 0→1; row-2 loss shows -$10.00; MTG-yes toggle + row-1-loss opens mm-row-1-loss-menu with Normal loss/MTG loss options; mm-reset-button only renders after tradesDone>0 (by design). (6) Free-tier flow: dashboard shows 'Unlock access' + quota-unlock-link 'Unlock your engine'; /news-signals shows news-locked + news-upgrade-button which opens upgrade-gate-sheet titled 'Unlock your engine.'; contact-admin href=https://t.me/Ayan_Dead target=_blank; view-plans shows upgrade-plan-free (broker href https://market-qx.pro/sign-up/?lid=619650) + upgrade-plan-license + purchase + back; Escape closes; X closes; mobile drag on .ug-grab dismisses. /management free-tier: generate opens gate instead of sheet. (7) Regression: /live-signals, /injector, /future-signals, /dashboard render with zero console errors; mobile bottom-nav navigates. Only note: automated backdrop-click at centroid doesn't dismiss (backdrop is a button covered by sheet at its center) — Escape/X/drag all work fine.",
+  "rca of the issue": "N/A — no functional bugs found."
+}

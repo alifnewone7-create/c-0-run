@@ -102,3 +102,11 @@ Design system: "cosmic purple" — background `#0b0618`, iris `#6d3bff` / `#8b5c
 
 ## Test credentials
 See `/app/memory/test_credentials.md`.
+
+- 2026-06 (upgrade gate + news/management redesign, Banglish request):
+  - `components/upgrade-gate.tsx` rewritten: portal sheet (`app/gate.css`, `ug-*`), mobile bottom sheet with drag-to-dismiss + X, desktop centered popup. Views: `locked` ("Unlock your engine." — perks, **View Plans** / **Contact Admin**), `plans` (Free access $0 steps + Direct plan $99, Back button, same sheet), `limit` ("Daily limit reached." — reset chip, Upgrade Plan / Contact Admin). Testids `upgrade-gate-*`, `upgrade-plan-*`.
+  - Shared hook `components/coco/use-sheet-drag.ts` (whole sheet drags when content fits `.is-fit`, otherwise only `[data-drag-handle]`; threshold 110px; <640px). Used by gate, news `EventDetail`, management `Celebration`. CSS gotcha: `.is-dragging { animation:none }` is required because keyframe fill-mode overrides inline transform.
+  - Dashboard tier card: CTA "Upgrade Plan" (paid) / "Unlock access" (free); KeyRound icon hidden for premium/admin (`tier-upgrade-icon`). Quota panel text → "Unlock your engine".
+  - News Signals rebuilt (`nw-*` in tools.css): gradient day hero (date tile + Events/High impact/Updated stats), tabs Newspaper/Atom, gradient event cards with time tile + flag + impact chip + direction badge (TrendingUp/Down), fundamental cards with Forecast/Previous tiles + confidence ring, detail sheet with bias medal + ring.
+  - Management rebuilt (`mm-*`): gradient panel, fields with watermark icons (Banknote/BadgePercent/Crosshair/ShieldHalf), MTG toggle (RefreshCcwDot), gradient stat pills, progress panel with circular gauge, gradient trade rows, PartyPopper celebration. Old `tl-stat/tl-stats` classes removed.
+  - Testing agent iteration_20: all pass (mobile 390 + desktop 1920). Test user restored to premium.
