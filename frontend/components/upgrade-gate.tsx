@@ -1,426 +1,325 @@
 'use client'
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import {
-  Lock,
-  KeyRound,
-  Headset,
   X,
-  Gauge,
+  Cpu,
   Gem,
-  Crown,
+  Headset,
+  ArrowRight,
+  ChevronLeft,
+  Infinity as InfinityIcon,
+  Zap,
+  Sparkles,
+  UserRoundPlus,
+  CircleDollarSign,
+  BadgeCheck,
+  KeyRound,
   Check,
-  UserPlus,
-  Wallet,
-  ShieldCheck,
-  Clock,
+  Hourglass,
+  Clock3,
+  Crown,
+  Layers,
+  type LucideIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useSheetDrag } from '@/components/coco/use-sheet-drag'
 import { FEATURE_LABEL, type FeatureKey } from '@/lib/tiers'
 
+const ADMIN_URL = 'https://t.me/Ayan_Dead'
+const BROKER_URL = 'https://market-qx.pro/sign-up/?lid=619650'
+
 type GateReason = 'locked' | 'limit'
+type GatePayload = { reason: GateReason; feature?: FeatureKey; message?: string }
+type View = 'locked' | 'plans' | 'limit'
 
-type GatePayload = {
-  reason: GateReason
-  feature?: FeatureKey
-  message?: string
-}
+type UpgradeGateContextValue = { open: (payload: GatePayload) => void }
+const UpgradeGateContext = createContext<UpgradeGateContextValue | undefined>(undefined)
 
-type UpgradeGateContextValue = {
-  /** Open the upgrade modal with a reason. */
-  open: (payload: GatePayload) => void
-}
+const PERKS: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: InfinityIcon, title: 'Daily signal engine', desc: 'Live, Future, Injector and both chart analyzers.' },
+  { icon: Zap, title: 'Instant activation', desc: 'Your plan switches on within minutes of verification.' },
+  { icon: Headset, title: 'Priority desk', desc: 'Direct support line for members, every day.' },
+]
 
-const UpgradeGateContext = createContext<UpgradeGateContextValue | undefined>(
-  undefined,
-)
-
-const FREE_STEPS = [
-  {
-    icon: UserPlus,
-    title: 'Create Account',
-    desc: 'Register through our exclusive partner link.',
-  },
-  {
-    icon: Wallet,
-    title: 'Deposit Capital',
-    desc: 'Minimum $50 to activate your balance.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Verify UID',
-    desc: 'Send your UID to support for instant access.',
-  },
+const FREE_STEPS: { icon: LucideIcon; title: string; desc: string }[] = [
+  { icon: UserRoundPlus, title: 'Create account', desc: 'Register through our exclusive partner link.' },
+  { icon: CircleDollarSign, title: 'Fund balance', desc: 'A minimum of $50 in capital activates access.' },
+  { icon: BadgeCheck, title: 'Verify UID', desc: 'Send your UID to the desk for instant verification.' },
 ]
 
 const LICENSE_PERKS = [
   'Skip broker registration entirely',
-  'Direct, unrestricted access',
-  '1-month full license, instant activation',
-  'Priority support included',
+  'Direct, unrestricted engine access',
+  'One month full plan, instant activation',
+  'Priority support channel included',
 ]
 
 export function UpgradeGateProvider({ children }: { children: ReactNode }) {
   const [payload, setPayload] = useState<GatePayload | null>(null)
-  const [showPlans, setShowPlans] = useState(false)
+  const [view, setView] = useState<View>('locked')
 
   const open = useCallback((next: GatePayload) => {
-    setShowPlans(false)
+    setView(next.reason === 'limit' ? 'limit' : 'locked')
     setPayload(next)
   }, [])
-  const close = useCallback(() => {
-    setPayload(null)
-    setShowPlans(false)
-  }, [])
-
-  const isLimit = payload?.reason === 'limit'
-  const featureLabel = payload?.feature ? FEATURE_LABEL[payload.feature] : null
+  const close = useCallback(() => setPayload(null), [])
 
   return (
     <UpgradeGateContext.Provider value={{ open }}>
       {children}
+      {payload && <GateSheet payload={payload} view={view} setView={setView} onClose={close} />}
+    </UpgradeGateContext.Provider>
+  )
+}
 
-      {payload && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="upgrade-title"
-        >
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={close}
-            className="absolute inset-0 bg-background/80 backdrop-blur-md"
-          />
+function GateSheet({
+  payload,
+  view,
+  setView,
+  onClose,
+}: {
+  payload: GatePayload
+  view: View
+  setView: (v: View) => void
+  onClose: () => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const { ref, handlers } = useSheetDrag(onClose)
 
-          {isLimit ? (
-            <div className="border-luxe surface-luxe relative z-10 w-full max-w-sm overflow-hidden rounded-[28px] shadow-2xl shadow-primary/30">
-              {/* ambient color grading */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
-              <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/25 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-24 -left-16 h-52 w-52 rounded-full bg-accent/20 blur-3xl" />
+  const close = useCallback(() => {
+    setClosing(true)
+    window.setTimeout(onClose, 180)
+  }, [onClose])
 
-              {/* top bar keeps the close button safely inside the card */}
-              <div className="relative z-30 flex justify-end px-4 pt-4">
-                <button
-                  type="button"
-                  onClick={close}
-                  className="btn-luxe-outline flex h-9 w-9 items-center justify-center rounded-xl"
-                  aria-label="Close dialog"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+  useEffect(() => {
+    setMounted(true)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [close])
 
-              <div className="relative z-10 flex flex-col items-center px-6 pb-7 pt-1 text-center sm:px-8">
-                {/* icon medallion */}
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/25 via-primary/10 to-accent/20 ring-1 ring-primary/40">
-                  <div className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 blur-xl" />
-                  <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-background/60 text-primary ring-1 ring-primary/30">
-                    <Gauge className="h-7 w-7" />
-                  </div>
-                </div>
+  if (!mounted) return null
 
-                <h2
-                  id="upgrade-title"
-                  className="mt-5 text-balance text-2xl font-bold tracking-tight sm:text-[1.7rem]"
-                >
-                  Daily limit reached
-                </h2>
+  const featureLabel = payload.feature ? FEATURE_LABEL[payload.feature] : null
 
-                <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-                  {`You've used all of your ${
-                    featureLabel ?? 'tool'
-                  } generations for today.`}
-                </p>
-
-                {/* reset time chip */}
-                <div className="mt-5 flex w-full items-start gap-3 rounded-2xl border border-primary/25 bg-primary/[0.07] p-3.5 text-left">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/25">
-                    <Clock className="h-4 w-4" />
-                  </span>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    Resets every morning after{' '}
-                    <span className="font-semibold text-foreground">
-                      6:00 AM
-                    </span>{' '}
-                    Bangladesh Standard Time{' '}
-                    <span className="whitespace-nowrap">(UTC+06:00)</span>.
-                  </p>
-                </div>
-
-                <Button
-                  nativeButton={false}
-                  render={
-                    <a
-                      href="https://t.me/Ayan_Dead"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    />
-                  }
-                  className="btn-luxe mt-6 h-12 w-full gap-2 rounded-xl text-sm font-semibold sm:text-base"
-                >
-                  <Crown className="h-[18px] w-[18px]" />
-                  I want to upgrade my account
-                </Button>
-              </div>
-            </div>
-          ) : !showPlans ? (
-            <div className="border-luxe surface-luxe relative z-10 w-full max-w-md overflow-hidden rounded-3xl shadow-2xl shadow-primary/25">
-              {/* subtle gold hairline at top */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-
-              {/* Header band */}
-              <div className="relative overflow-hidden border-b border-border/60 px-5 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
-                <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-primary/25 blur-3xl" />
-                <div className="pointer-events-none absolute -left-10 -top-16 h-36 w-36 rounded-full bg-accent/15 blur-3xl" />
-
-                <div className="relative flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-lg shadow-primary/20 ring-1 ring-primary/30 sm:h-14 sm:w-14">
-                      <Lock className="lock-anim h-6 w-6 sm:h-7 sm:w-7" />
-                    </div>
-                    <h2
-                      id="upgrade-title"
-                      className="min-w-0 text-balance text-lg font-bold leading-snug tracking-tight sm:text-2xl"
-                    >
-                      Unlock the full{' '}
-                      <span className="text-shine">experience</span>
-                    </h2>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={close}
-                    className="btn-luxe-outline flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                    aria-label="Close dialog"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="relative px-6 pb-6 pt-5 sm:px-8">
-                <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                  {payload.message ??
-                    `Your Free account can browse every page, but generating results with ${
-                      featureLabel ?? 'the tools'
-                    } is reserved for members. Choose a plan to start winning.`}
-                </p>
-
-                <ul className="mt-5 flex flex-col gap-3">
-                  {[
-                    'Unlimited AI signal generation',
-                    'Priority support & instant activation',
-                    'Full access to every premium tool',
-                  ].map((perk) => (
-                    <li key={perk} className="flex items-start gap-3 text-sm">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                        <Check className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="text-foreground/90">{perk}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-6 flex flex-col gap-2.5">
-                  <Button
-                    onClick={() => setShowPlans(true)}
-                    className="btn-luxe h-12 w-full gap-2 rounded-xl text-sm font-semibold sm:text-base"
-                  >
-                    <Gem className="h-[18px] w-[18px]" />
-                    View plans
-                  </Button>
-                  <Button
-                    variant="outline"
-                    nativeButton={false}
-                    render={
-                      <a
-                        href="https://t.me/Ayan_Dead"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
-                    className="h-11 w-full gap-2 rounded-xl"
-                  >
-                    <Headset className="h-[18px] w-[18px]" />
-                    Contact Admin
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="border-luxe surface-luxe relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[28px] p-6 shadow-2xl shadow-primary/25 sm:p-8">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-
-              <button
-                type="button"
-                onClick={close}
-                className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/40 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Close dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-
-              <div className="text-center">
-                <span className="border-luxe surface-luxe inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
-                  <Crown className="h-3.5 w-3.5 text-primary" />
-                  Choose your access
-                </span>
-                <h2 className="mt-3 text-balance text-2xl font-bold tracking-tight sm:text-3xl">
-                  Two ways to start with{' '}
-                  <span className="text-gradient">Sweetex AI</span>
-                </h2>
-                <p className="mx-auto mt-2 max-w-md text-pretty text-sm text-muted-foreground">
-                  Get free access through our partner broker, or buy a direct
-                  license and skip the setup.
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-5 lg:grid-cols-2">
-                {/* Free Access */}
-                <div className="border-luxe surface-luxe relative flex flex-col rounded-3xl p-5 shadow-xl shadow-black/20 sm:p-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Free Access</h3>
-                    <span className="rounded-full bg-[var(--up)]/15 px-3 py-1 text-xs font-semibold text-[var(--up)]">
-                      $0 / partner
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Follow these 3 simple steps to unlock Sweetex AI for free.
-                  </p>
-
-                  <ol className="mt-5 flex flex-1 flex-col gap-3">
-                    {FREE_STEPS.map((step, i) => (
-                      <li
-                        key={step.title}
-                        className="flex gap-3 rounded-2xl border border-border bg-background/40 p-3"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-sm font-bold text-primary">
-                          {i + 1}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <step.icon className="h-4 w-4 text-foreground" />
-                            <p className="text-sm font-semibold leading-tight">
-                              {step.title}
-                            </p>
-                          </div>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {step.desc}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-
-                  <div className="mt-5 flex flex-col gap-3">
-                    <Button
-                      variant="outline"
-                      nativeButton={false}
-                      render={
-                        <a
-                          href="https://market-qx.pro/sign-up/?lid=619650"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      }
-                      className="btn-luxe-outline h-11 w-full gap-2 rounded-xl border-transparent text-sm font-semibold"
-                    >
-                      <UserPlus className="h-[18px] w-[18px]" />
-                      Create Quotex Account
-                    </Button>
-                    <Button
-                      variant="outline"
-                      nativeButton={false}
-                      render={
-                        <a
-                          href="https://t.me/Ayan_Dead"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      }
-                      className="group h-11 w-full gap-2 rounded-xl border border-accent/40 bg-accent/10 text-sm font-semibold text-accent transition-shadow hover:bg-accent/15"
-                    >
-                      <Headset className="h-[18px] w-[18px]" />
-                      Contact Admin
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Buy License */}
-                <div className="surface-luxe relative flex flex-col overflow-hidden rounded-3xl border border-primary/40 p-5 shadow-2xl shadow-primary/20 ring-1 ring-primary/20 sm:p-6">
-                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
-
-                  <div className="relative flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Buy License</h3>
-                    <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-                      Direct access
-                    </span>
-                  </div>
-                  <p className="relative mt-2 text-sm text-muted-foreground">
-                    Skip broker registration. Purchase a direct, unrestricted
-                    1-month license immediately.
-                  </p>
-
-                  <div className="relative mt-5 flex items-end gap-1">
-                    <span className="text-gradient text-4xl font-extrabold tracking-tight">
-                      $99
-                    </span>
-                    <span className="mb-1 text-sm text-muted-foreground">
-                      / month
-                    </span>
-                  </div>
-
-                  <ul className="relative mt-5 flex flex-1 flex-col gap-3">
-                    {LICENSE_PERKS.map((perk) => (
-                      <li key={perk} className="flex items-start gap-3 text-sm">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-foreground">
-                          <Check className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="text-foreground/90">{perk}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    nativeButton={false}
-                    render={
-                      <a
-                        href="https://t.me/Ayan_Dead"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
-                    className="btn-luxe relative mt-5 h-11 w-full gap-2 rounded-xl text-sm font-semibold"
-                  >
-                    <KeyRound className="h-[18px] w-[18px]" />
-                    Purchase License
-                  </Button>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowPlans(false)}
-                className="mx-auto mt-5 block text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              >
+  return createPortal(
+    <div className={`ug-root${closing ? ' is-closing' : ''}`} role="dialog" aria-modal="true" aria-labelledby="upgrade-title" data-testid="upgrade-gate">
+      <button type="button" aria-label="Close" onClick={close} className="ug-backdrop" data-testid="upgrade-gate-backdrop" />
+      <div ref={ref} className="ug-sheet inj" data-view={view} data-testid="upgrade-gate-sheet" {...handlers}>
+        <span className="ug-hairline" aria-hidden="true" />
+        <div className="ug-head" data-drag-handle>
+          <span className="ug-grab" aria-hidden="true" />
+          <div className="ug-head-row">
+            {view === 'plans' ? (
+              <button type="button" onClick={() => setView('locked')} className="ug-back" data-testid="upgrade-gate-back">
+                <ChevronLeft className="h-4 w-4" />
                 Back
               </button>
-            </div>
-          )}
+            ) : (
+              <span className="ug-eyebrow">
+                <Sparkles className="h-3 w-3" />
+                {view === 'limit' ? 'Quota' : 'Coco engine'}
+              </span>
+            )}
+            <button type="button" onClick={close} aria-label="Close dialog" className="ug-close" data-testid="upgrade-gate-close">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      )}
-    </UpgradeGateContext.Provider>
+
+        {view === 'locked' && <LockedView featureLabel={featureLabel} message={payload.message} onPlans={() => setView('plans')} />}
+        {view === 'plans' && <PlansView />}
+        {view === 'limit' && <LimitView featureLabel={featureLabel} />}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function LockedView({ featureLabel, message, onPlans }: { featureLabel: string | null; message?: string; onPlans: () => void }) {
+  return (
+    <div className="ug-body" data-testid="upgrade-gate-locked">
+      <div className="ug-medal" aria-hidden="true">
+        <span className="ug-medal-ring" />
+        <span className="ug-medal-core">
+          <Cpu className="h-7 w-7" />
+        </span>
+      </div>
+      <h2 id="upgrade-title" className="ug-title coco-display" data-testid="upgrade-gate-title">
+        Unlock your <span className="ug-title-accent">engine.</span>
+      </h2>
+      <p className="ug-lead">
+        {message ??
+          `Your Free account can explore every page. Generating results with ${featureLabel ?? 'the tools'} is reserved for members.`}
+      </p>
+
+      <ul className="ug-perks">
+        {PERKS.map((p, i) => (
+          <li key={p.title} className="ug-perk" style={{ '--d': `${80 + i * 60}ms` } as React.CSSProperties}>
+            <span className="ug-perk-icon">
+              <p.icon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <b>{p.title}</b>
+              <em>{p.desc}</em>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="ug-actions">
+        <button type="button" onClick={onPlans} className="ug-btn ug-btn-primary" data-testid="upgrade-gate-view-plans">
+          <span className="inj-btn-sheen" aria-hidden="true" />
+          <Gem className="h-[18px] w-[18px]" />
+          View Plans
+          <ArrowRight className="h-4 w-4" />
+        </button>
+        <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-ghost" data-testid="upgrade-gate-contact-admin">
+          <Headset className="h-[18px] w-[18px]" />
+          Contact Admin
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function PlansView() {
+  return (
+    <div className="ug-body ug-body-plans" data-testid="upgrade-gate-plans">
+      <div className="ug-plans-head">
+        <span className="ug-eyebrow">
+          <Layers className="h-3 w-3" />
+          Access paths
+        </span>
+        <h2 id="upgrade-title" className="ug-title coco-display" data-testid="upgrade-gate-plans-title">
+          Two ways in. <span className="ug-title-accent">Same engine.</span>
+        </h2>
+        <p className="ug-lead">Earn free access through our partner broker, or take a direct plan and skip the setup completely.</p>
+      </div>
+
+      <div className="ug-plans">
+        <article className="ug-plan ug-plan-free" data-testid="upgrade-plan-free">
+          <header className="ug-plan-head">
+            <div>
+              <p className="ug-plan-kicker">Partner route</p>
+              <h3 className="ug-plan-name coco-display">Free access</h3>
+            </div>
+            <span className="ug-price">
+              <b>$0</b>
+              <em>forever</em>
+            </span>
+          </header>
+          <p className="ug-plan-sub">Three steps and the engine unlocks at no cost.</p>
+          <ol className="ug-steps">
+            {FREE_STEPS.map((s, i) => (
+              <li key={s.title} className="ug-step">
+                <span className="ug-step-num">
+                  <s.icon className="h-4 w-4" />
+                  <i>{i + 1}</i>
+                </span>
+                <span className="min-w-0">
+                  <b>{s.title}</b>
+                  <em>{s.desc}</em>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div className="ug-plan-actions">
+            <a href={BROKER_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-ghost" data-testid="upgrade-plan-broker">
+              <UserRoundPlus className="h-4 w-4" />
+              Create account
+            </a>
+            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-soft" data-testid="upgrade-plan-free-admin">
+              <Headset className="h-4 w-4" />
+              Contact Admin
+            </a>
+          </div>
+        </article>
+
+        <article className="ug-plan ug-plan-license" data-testid="upgrade-plan-license">
+          <span className="ug-plan-glow" aria-hidden="true" />
+          <header className="ug-plan-head">
+            <div>
+              <p className="ug-plan-kicker">Instant access</p>
+              <h3 className="ug-plan-name coco-display">Direct plan</h3>
+            </div>
+            <span className="ug-price">
+              <b>$99</b>
+              <em>/ month</em>
+            </span>
+          </header>
+          <p className="ug-plan-sub">No broker, no waiting. One month of unrestricted engine access.</p>
+          <ul className="ug-perklist">
+            {LICENSE_PERKS.map((perk) => (
+              <li key={perk}>
+                <span className="ug-tick">
+                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                </span>
+                {perk}
+              </li>
+            ))}
+          </ul>
+          <div className="ug-plan-actions">
+            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-primary" data-testid="upgrade-plan-purchase">
+              <span className="inj-btn-sheen" aria-hidden="true" />
+              <KeyRound className="h-[18px] w-[18px]" />
+              Purchase Plan
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        </article>
+      </div>
+    </div>
+  )
+}
+
+function LimitView({ featureLabel }: { featureLabel: string | null }) {
+  return (
+    <div className="ug-body" data-testid="upgrade-gate-limit">
+      <div className="ug-medal is-gold" aria-hidden="true">
+        <span className="ug-medal-ring" />
+        <span className="ug-medal-core">
+          <Hourglass className="h-7 w-7" />
+        </span>
+      </div>
+      <h2 id="upgrade-title" className="ug-title coco-display" data-testid="upgrade-gate-title">
+        Daily limit <span className="ug-title-accent">reached.</span>
+      </h2>
+      <p className="ug-lead">{`You've used every ${featureLabel ?? 'tool'} generation available today.`}</p>
+
+      <div className="ug-reset" data-testid="upgrade-gate-reset">
+        <span className="ug-reset-icon">
+          <Clock3 className="h-4 w-4" />
+        </span>
+        <p>
+          Quota refreshes every morning after <b>6:00 AM</b> Bangladesh Standard Time <span className="whitespace-nowrap">(UTC+06:00)</span>.
+        </p>
+      </div>
+
+      <div className="ug-actions">
+        <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-primary" data-testid="upgrade-gate-limit-upgrade">
+          <span className="inj-btn-sheen" aria-hidden="true" />
+          <Crown className="h-[18px] w-[18px]" />
+          Upgrade Plan
+          <ArrowRight className="h-4 w-4" />
+        </a>
+        <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="ug-btn ug-btn-ghost" data-testid="upgrade-gate-limit-admin">
+          <Headset className="h-[18px] w-[18px]" />
+          Contact Admin
+        </a>
+      </div>
+    </div>
   )
 }
 
 export function useUpgradeGate() {
   const ctx = useContext(UpgradeGateContext)
-  if (!ctx) {
-    throw new Error('useUpgradeGate must be used within an UpgradeGateProvider')
-  }
+  if (!ctx) throw new Error('useUpgradeGate must be used within an UpgradeGateProvider')
   return ctx
 }

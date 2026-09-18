@@ -3,29 +3,30 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  SlidersHorizontal,
-  Wallet,
-  Percent,
-  Target,
-  ShieldAlert,
-  Repeat,
+  Settings2,
+  ListChecks,
+  Banknote,
+  BadgePercent,
+  Crosshair,
+  ShieldHalf,
+  RefreshCcwDot,
   Check,
   X,
-  Trophy,
-  CircleDollarSign,
+  PartyPopper,
   Coins,
-  Layers,
+  Layers3,
   Lightbulb,
   AlertTriangle,
-  Calculator,
-  TableProperties,
-  RotateCcw,
+  Gauge,
+  Rows3,
+  Undo2,
   ChevronLeft,
   type LucideIcon,
 } from 'lucide-react'
 import { CocoPageShell } from '@/components/coco/coco-page-shell'
 import { AuthGuard } from '@/components/auth-guard'
 import { PrimaryButton } from '@/components/signal-kit'
+import { useSheetDrag } from '@/components/coco/use-sheet-drag'
 import { useAuth } from '@/components/auth-provider'
 import { useUpgradeGate } from '@/components/upgrade-gate'
 import { simulate, normalizeResults, fmtMoney, MIN_TRADE, type TradeConfig, type TradeResult } from '@/lib/mtg'
@@ -177,36 +178,36 @@ function ManagementStudio() {
   const progress = sheet && sheet.profitTargetAmount > 0 ? Math.max(0, Math.min(1, sheet.finalProfit / sheet.profitTargetAmount)) : 0
 
   return (
-    <div className="inj flex flex-1 flex-col gap-4 sm:gap-5" data-testid="management-studio">
+    <div className="inj mm flex flex-1 flex-col gap-4 sm:gap-5" data-testid="management-studio">
       <div className="tl-seg coco-rise" style={{ '--n': 2, '--d': '40ms' } as React.CSSProperties}>
         <span className="tl-seg-thumb" style={{ '--i': tab === 'management' ? 0 : 1 } as React.CSSProperties} aria-hidden="true" />
         <button type="button" className="tl-seg-item" data-active={tab === 'management'} onClick={() => setTab('management')} data-testid="mm-tab-management">
-          <SlidersHorizontal className="h-4 w-4" />
+          <Settings2 className="h-4 w-4" />
           Management
         </button>
         <button type="button" className="tl-seg-item" data-active={tab === 'sheet'} onClick={() => setTab('sheet')} data-testid="mm-tab-sheet">
-          <TableProperties className="h-4 w-4" />
+          <ListChecks className="h-4 w-4" />
           Sheet
           {sheet && <span className="tl-seg-badge">{sheet.rows.length}</span>}
         </button>
       </div>
 
       {tab === 'management' ? (
-        <section className="inj-panel coco-rise" style={{ '--d': '100ms' } as React.CSSProperties} data-testid="mm-config">
-          <div className="flex items-center gap-3">
-            <span className="inj-stat-icon">
-              <Calculator className="h-4 w-4" />
+        <section className="mm-panel coco-rise" style={{ '--d': '100ms' } as React.CSSProperties} data-testid="mm-config">
+          <span className="mm-panel-orb" aria-hidden="true" />
+          <header className="mm-head">
+            <span className="mm-head-icon">
+              <Gauge className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="coco-sub text-[17px] leading-tight text-white sm:text-lg">Plan your session</p>
-              <p className="inj-kicker">Capital · payout · target · risk</p>
+              <p className="mm-kicker">Session planner</p>
+              <p className="coco-display text-[19px] leading-tight text-white sm:text-[21px]">Plan your session</p>
             </div>
-          </div>
-          <div className="inj-divider" />
+          </header>
 
           <div className="mm-fields">
             <Field
-              icon={Wallet}
+              icon={Banknote}
               label="Initial capital"
               prefix="$"
               value={initialCapital}
@@ -217,7 +218,7 @@ function ManagementStudio() {
               testid="mm-capital"
             />
             <Field
-              icon={Percent}
+              icon={BadgePercent}
               label="Average payout"
               suffix="%"
               value={averagePayout}
@@ -229,7 +230,7 @@ function ManagementStudio() {
               testid="mm-payout"
             />
             <Field
-              icon={Target}
+              icon={Crosshair}
               label="Profit target"
               suffix="%"
               value={profitTarget}
@@ -242,7 +243,7 @@ function ManagementStudio() {
               testid="mm-target"
             />
             <Field
-              icon={ShieldAlert}
+              icon={ShieldHalf}
               label="Risk per trade"
               suffix="%"
               value={riskPerTrade}
@@ -261,22 +262,22 @@ function ManagementStudio() {
 
           {valid && (
             <div className="mm-preview coco-rise" data-testid="mm-preview">
-              <Stat icon={Target} label="Target" value={fmtMoney(preview.profitTargetAmount)} tone="gold" />
-              <Stat icon={ShieldAlert} label="Per trade" value={fmtMoney(preview.baseRiskAmount)} tone="down" />
-              <Stat icon={Layers} label="Wins needed" value={String(normalizeResults(config, []).length)} tone="iris" />
+              <Stat icon={Crosshair} label="Target" value={fmtMoney(preview.profitTargetAmount)} tone="gold" />
+              <Stat icon={ShieldHalf} label="Per trade" value={fmtMoney(preview.baseRiskAmount)} tone="down" />
+              <Stat icon={Layers3} label="Wins needed" value={String(normalizeResults(config, []).length)} tone="iris" />
             </div>
           )}
 
-          <PrimaryButton onClick={generate} disabled={!valid} icon={TableProperties} testid="mm-generate-button">
+          <PrimaryButton onClick={generate} disabled={!valid} icon={Rows3} testid="mm-generate-button">
             Generate Sheet
           </PrimaryButton>
           <p className="mm-foot">{!valid ? 'Fill in all fields to generate your trade sheet.' : sheet ? 'A saved sheet exists — generating will replace it.' : 'Your sheet is saved on this device.'}</p>
         </section>
       ) : !hydrated ? null : !sheet ? (
-        <section className="inj-panel coco-rise" style={{ '--d': '100ms' } as React.CSSProperties}>
+        <section className="mm-panel coco-rise" style={{ '--d': '100ms' } as React.CSSProperties}>
           <div className="tl-state" data-testid="mm-empty">
             <span className="tl-state-icon">
-              <SlidersHorizontal className="h-6 w-6" />
+              <ListChecks className="h-6 w-6" />
             </span>
             <div>
               <h3>No sheet generated yet</h3>
@@ -292,14 +293,14 @@ function ManagementStudio() {
         <div className="mm-sheet coco-rise" style={{ '--d': '100ms' } as React.CSSProperties} data-testid="mm-sheet">
           <aside className="mm-sheet-side">
             <ProgressPanel sheet={sheet} progress={progress} onReset={resetSheet} />
-            <div className="tl-stats tl-stats-4">
-              <Stat icon={Target} label="Target" value={fmtMoney(sheet.profitTargetAmount)} tone="gold" testid="mm-stat-target" />
-              <Stat icon={ShieldAlert} label="Per trade" value={fmtMoney(sheet.baseRiskAmount)} tone="down" testid="mm-stat-risk" />
-              <Stat icon={CircleDollarSign} label="Per win" value={fmtMoney(sheet.perWinProfit)} tone="up" testid="mm-stat-win" />
-              <Stat icon={Layers} label="Trades" value={`${sheet.tradesDone}/${sheet.rows.length}`} tone="iris" testid="mm-stat-trades" />
+            <div className="mm-stats">
+              <Stat icon={Crosshair} label="Target" value={fmtMoney(sheet.profitTargetAmount)} tone="gold" testid="mm-stat-target" />
+              <Stat icon={ShieldHalf} label="Per trade" value={fmtMoney(sheet.baseRiskAmount)} tone="down" testid="mm-stat-risk" />
+              <Stat icon={Coins} label="Per win" value={fmtMoney(sheet.perWinProfit)} tone="up" testid="mm-stat-win" />
+              <Stat icon={Layers3} label="Trades" value={`${sheet.tradesDone}/${sheet.rows.length}`} tone="iris" testid="mm-stat-trades" />
             </div>
           </aside>
-          <section className="inj-panel">
+          <section className="mm-panel">
             <TradeSheet sheet={sheet} mtg={session!.config.mtg} onSet={setResultAt} />
           </section>
         </div>
@@ -312,16 +313,16 @@ function ManagementStudio() {
 
 function Stat({ icon: Icon, label, value, tone, testid }: { icon: LucideIcon; label: string; value: string; tone: Tone; testid?: string }) {
   return (
-    <div className="tl-stat" data-tone={tone}>
-      <span className="tl-stat-icon">
+    <div className="mm-stat" data-tone={tone}>
+      <span className="mm-stat-icon">
         <Icon className="h-4 w-4" />
       </span>
-      <div className="min-w-0">
-        <p className="tl-stat-value coco-display truncate" data-testid={testid}>
+      <span className="min-w-0">
+        <b className="coco-display truncate" data-testid={testid}>
           {value}
-        </p>
-        <p className="tl-stat-label">{label}</p>
-      </div>
+        </b>
+        <em>{label}</em>
+      </span>
     </div>
   )
 }
@@ -357,12 +358,18 @@ function Field({
 }) {
   return (
     <label className="mm-field" data-tone={tone}>
+      <Icon className="mm-field-mark" />
       <span className="mm-field-head">
-        <span className="tl-stat-icon">
+        <span className="mm-field-icon">
           <Icon className="h-4 w-4" />
         </span>
         <span className="mm-field-label">{label}</span>
-        {badge && <span className="tl-chip" data-tone={badge.tone} data-testid={`${testid}-badge`}><i aria-hidden="true" />{badge.label}</span>}
+        {badge && (
+          <span className="tl-chip" data-tone={badge.tone} data-testid={`${testid}-badge`}>
+            <i aria-hidden="true" />
+            {badge.label}
+          </span>
+        )}
       </span>
       <span className="mm-field-input">
         {prefix && <span>{prefix}</span>}
@@ -396,9 +403,9 @@ function Field({
 
 function MtgToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="mm-toggle" data-testid="mm-mtg-toggle">
-      <span className="inj-stat-icon">
-        <Repeat className="h-4 w-4" />
+    <div className="mm-toggle" data-on={value} data-testid="mm-mtg-toggle">
+      <span className="mm-toggle-icon">
+        <RefreshCcwDot className="h-4 w-4" />
       </span>
       <span className="mm-toggle-text">
         <p className="mm-toggle-title">Martingale (MTG)</p>
@@ -422,31 +429,27 @@ function ProgressPanel({ sheet, progress, onReset }: { sheet: ReturnType<typeof 
   const up = sheet.finalProfit >= 0
   return (
     <div className="mm-progress" data-tone={up ? 'up' : 'down'} data-testid="mm-progress">
+      <span className="mm-panel-orb" aria-hidden="true" />
       <div className="mm-progress-top">
-        <div className="flex items-center gap-3">
-          <span className="tl-stat-icon" style={{ height: 38, width: 38, borderRadius: 12 }}>
-            <Coins className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="inj-kicker inj-kicker-soft">Net profit</p>
-            <p className="mm-net coco-display" data-testid="mm-net-profit">
-              {fmtMoney(sheet.finalProfit)}
-            </p>
-          </div>
-        </div>
-        <div className="mm-target">
-          <p className="inj-kicker inj-kicker-soft">Target</p>
-          <b>{fmtMoney(sheet.profitTargetAmount)}</b>
+        <span className="mm-gauge" style={{ '--p': pct } as React.CSSProperties}>
+          <svg viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15.9155" className="mm-gauge-track" />
+            <circle cx="18" cy="18" r="15.9155" className="mm-gauge-fill" strokeDasharray={`${Math.max(pct, 0)} 100`} />
+          </svg>
+          <b data-testid="mm-progress-pct">{pct}%</b>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="mm-kicker">Net profit</p>
+          <p className="mm-net coco-display" data-testid="mm-net-profit">
+            {fmtMoney(sheet.finalProfit)}
+          </p>
+          <p className="mm-progress-target">
+            of <b>{fmtMoney(sheet.profitTargetAmount)}</b> target
+          </p>
         </div>
       </div>
-      <div>
-        <div className="mm-bar">
-          <i style={{ '--p': Math.max(progress, 0.02) } as React.CSSProperties} />
-        </div>
-        <div className="mm-bar-meta mt-1.5">
-          <b data-testid="mm-progress-pct">{pct}%</b>
-          <span>to profit target</span>
-        </div>
+      <div className="mm-bar">
+        <i style={{ '--p': Math.max(progress, 0.02) } as React.CSSProperties} />
       </div>
       <div className="mm-counts">
         <span className="tl-chip" data-tone="up" data-testid="mm-wins">
@@ -458,12 +461,12 @@ function ProgressPanel({ sheet, progress, onReset }: { sheet: ReturnType<typeof 
           {sheet.losses} L
         </span>
         <span className="tl-chip" data-tone="dim">
-          <Layers className="h-3 w-3" />
+          <Layers3 className="h-3 w-3" />
           {sheet.pendingCount} planned
         </span>
         {sheet.tradesDone > 0 && (
           <button type="button" onClick={onReset} className="inj-btn-ghost" data-testid="mm-reset-button">
-            <RotateCcw className="h-3.5 w-3.5" />
+            <Undo2 className="h-3.5 w-3.5" />
             Reset
           </button>
         )}
@@ -478,21 +481,18 @@ function TradeSheet({ sheet, mtg, onSet }: { sheet: ReturnType<typeof simulate>;
 
   return (
     <div className="mm-rows">
-      <div className="mm-rows-head">
-        <div className="flex items-center gap-3">
-          <span className="inj-stat-icon">
-            <TableProperties className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="coco-sub text-[15px] text-white">Trade sheet</p>
-            <p className="inj-kicker">Mark each trade as it closes</p>
-          </div>
+      <header className="mm-head">
+        <span className="mm-head-icon">
+          <ListChecks className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="mm-kicker">Trade sheet</p>
+          <p className="coco-display text-[17px] leading-tight text-white">Mark each trade as it closes</p>
         </div>
         <span className="tl-chip" data-tone="iris" data-testid="mm-sheet-count">
           {sheet.tradesDone}/{sheet.rows.length}
         </span>
-      </div>
-      <div className="inj-divider" />
+      </header>
       {sheet.rows.map((row, i) => (
         <TradeRow key={row.index} row={row} mtg={mtg} delay={Math.min(i * 40, 400)} onSet={(r) => onSet(i, r)} />
       ))}
@@ -519,7 +519,7 @@ function TradeRow({ row, mtg, delay, onSet }: { row: ReturnType<typeof simulate>
           Stake
           {row.isMtg && (
             <span className="tl-chip" data-tone={isLossMtg ? 'down' : 'iris'} style={{ height: 16, fontSize: 8.5 }}>
-              <Repeat className="h-2.5 w-2.5" />
+              <RefreshCcwDot className="h-2.5 w-2.5" />
               MTG
             </span>
           )}
@@ -575,7 +575,7 @@ function TradeRow({ row, mtg, delay, onSet }: { row: ReturnType<typeof simulate>
             data-on={isMtgResult}
             data-testid={`mm-row-${row.index}-mtg`}
           >
-            <Repeat className="h-4 w-4" />
+            <RefreshCcwDot className="h-4 w-4" />
           </button>
         )}
         {mtg && menu && (
@@ -591,7 +591,7 @@ function TradeRow({ row, mtg, delay, onSet }: { row: ReturnType<typeof simulate>
               </button>
               <button type="button" className="mm-menu-item" data-on={isLossMtg} onClick={() => { setMenu(false); onSet('loss-mtg') }}>
                 <span>
-                  <Repeat className="h-3.5 w-3.5" style={{ color: '#ff8a95' }} />
+                  <RefreshCcwDot className="h-3.5 w-3.5" style={{ color: '#ff8a95' }} />
                   MTG loss
                 </span>
                 <b>{fmtMoney(-(row.amount * 3))}</b>
@@ -606,16 +606,19 @@ function TradeRow({ row, mtg, delay, onSet }: { row: ReturnType<typeof simulate>
 
 function Celebration({ sheet, onClose }: { sheet: ReturnType<typeof simulate>; onClose: () => void }) {
   const [mounted, setMounted] = useState(false)
+  const { ref, handlers } = useSheetDrag(onClose)
   useEffect(() => setMounted(true), [])
   if (!mounted) return null
   return createPortal(
     <div className="tl-modal-root" role="dialog" aria-modal="true" aria-label="Profit target reached">
       <button type="button" aria-label="Close" onClick={onClose} className="tl-modal-backdrop" />
-      <div className="inj inj-panel tl-modal items-center text-center" style={{ maxWidth: 420 }} data-testid="mm-celebration">
-        <span className="tl-modal-grab" aria-hidden="true" />
+      <div ref={ref} className="inj mm tl-modal items-center text-center" style={{ maxWidth: 420 }} data-testid="mm-celebration" {...handlers}>
+        <div className="tl-modal-head w-full" data-drag-handle>
+          <span className="tl-modal-grab" aria-hidden="true" />
+        </div>
         <div className="mm-trophy">
           <span>
-            <Trophy className="h-8 w-8" />
+            <PartyPopper className="h-8 w-8" />
           </span>
         </div>
         <div>

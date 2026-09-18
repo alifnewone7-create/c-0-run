@@ -4,29 +4,31 @@ import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import { createPortal } from 'react-dom'
 import {
-  CalendarDays,
-  BrainCircuit,
+  Newspaper,
+  Atom,
   Flame,
-  Gauge,
+  Radar,
   CalendarX,
-  Clock,
+  Clock3,
   ChevronRight,
-  ArrowUp,
-  ArrowDown,
+  TrendingUp,
+  TrendingDown,
   Minus,
   X,
-  Activity,
+  Crosshair,
   History,
   RefreshCw,
   Loader2,
   AlertTriangle,
-  Sparkles,
-  Lock,
+  LockKeyhole,
   KeyRound,
+  Waypoints,
+  type LucideIcon,
 } from 'lucide-react'
 import { CocoPageShell } from '@/components/coco/coco-page-shell'
 import { AuthGuard } from '@/components/auth-guard'
 import { PrimaryButton } from '@/components/signal-kit'
+import { useSheetDrag } from '@/components/coco/use-sheet-drag'
 import { flagUrl } from '@/lib/markets'
 import { useAuth } from '@/components/auth-provider'
 import { useUpgradeGate } from '@/components/upgrade-gate'
@@ -70,6 +72,10 @@ function fmtTime(iso: string) {
 function fmtTimeShort(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 }
+function fmtClock(iso: string) {
+  const [time, period] = fmtTime(iso).split(' ')
+  return { time, period: period ?? '' }
+}
 function fmtDay(iso: string) {
   return new Date(iso).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
 }
@@ -83,6 +89,9 @@ const impactMeta: Record<NewsImpact, { label: string; tone: Tone }> = {
 
 function dirTone(d: NewsEvent['direction']): Tone {
   return d === 'UP' ? 'up' : d === 'DOWN' ? 'down' : 'dim'
+}
+function dirWord(d: NewsEvent['direction']) {
+  return d === 'UP' ? 'Bullish' : d === 'DOWN' ? 'Bearish' : 'Neutral'
 }
 
 export function NewsSignalsView() {
@@ -135,30 +144,31 @@ function NewsStudio() {
 
   const fundamentals = useMemo(() => events.filter((e) => e.impact === 'high' || e.impact === 'medium'), [events])
   const ready = hasAccess && !isLoading && !error && Boolean(data)
+  const busy = hasAccess && (isLoading || (!data && !error))
 
   return (
-    <div className="inj flex flex-1 flex-col gap-4 sm:gap-5" data-testid="news-studio">
-      <section className="inj-panel coco-rise" style={{ '--d': '60ms' } as React.CSSProperties}>
-        <div className="tl-seg" style={{ '--n': 2 } as React.CSSProperties}>
-          <span className="tl-seg-thumb" style={{ '--i': section === 'events' ? 0 : 1 } as React.CSSProperties} aria-hidden="true" />
-          <button type="button" className="tl-seg-item" data-active={section === 'events'} onClick={() => setSection('events')} data-testid="news-tab-events">
-            <CalendarDays className="h-4 w-4" />
-            Today&apos;s Events
-          </button>
-          <button type="button" className="tl-seg-item" data-active={section === 'fundamental'} onClick={() => setSection('fundamental')} data-testid="news-tab-fundamental">
-            <BrainCircuit className="h-4 w-4" />
-            Fundamental
-          </button>
-        </div>
+    <div className="inj nw flex flex-1 flex-col gap-4 sm:gap-5" data-testid="news-studio">
+      {ready && <DayHero events={events} updatedAt={data?.updatedAt} />}
 
-        {!authLoading && !hasAccess && <LockedState />}
-        {hasAccess && (isLoading || (!data && !error)) && <LoadingState />}
-        {hasAccess && error && !isLoading && <ErrorState onRetry={() => mutate()} message={String(error.message || error)} />}
-      </section>
+      <div className="tl-seg coco-rise" style={{ '--n': 2, '--d': '80ms' } as React.CSSProperties}>
+        <span className="tl-seg-thumb" style={{ '--i': section === 'events' ? 0 : 1 } as React.CSSProperties} aria-hidden="true" />
+        <button type="button" className="tl-seg-item" data-active={section === 'events'} onClick={() => setSection('events')} data-testid="news-tab-events">
+          <Newspaper className="h-4 w-4" />
+          Today&apos;s Events
+        </button>
+        <button type="button" className="tl-seg-item" data-active={section === 'fundamental'} onClick={() => setSection('fundamental')} data-testid="news-tab-fundamental">
+          <Atom className="h-4 w-4" />
+          Fundamental
+        </button>
+      </div>
+
+      {!authLoading && !hasAccess && <LockedState />}
+      {busy && <LoadingState />}
+      {hasAccess && error && !isLoading && <ErrorState onRetry={() => mutate()} message={String(error.message || error)} />}
 
       {ready &&
         (section === 'events' ? (
-          <EventsSection events={events} updatedAt={data?.updatedAt} onOpen={setActive} />
+          <EventsSection events={events} onOpen={setActive} />
         ) : (
           <FundamentalSection events={fundamentals} onOpen={setActive} />
         ))}
@@ -170,9 +180,9 @@ function NewsStudio() {
 
 /* ── shared bits ── */
 
-function Flag({ currency }: { currency: string }) {
+function Flag({ currency, size }: { currency: string; size?: 'lg' }) {
   return (
-    <span className="nw-ev-flag" aria-hidden="true">
+    <span className="nw-flag" data-size={size} aria-hidden="true">
       <img src={flagUrl(currency)} alt="" loading="lazy" />
     </span>
   )
@@ -188,93 +198,104 @@ function Chip({ tone, label, testid }: { tone: Tone; label: string; testid?: str
 }
 
 function DirIcon({ direction, className }: { direction: NewsEvent['direction']; className?: string }) {
-  const Icon = direction === 'UP' ? ArrowUp : direction === 'DOWN' ? ArrowDown : Minus
-  return <Icon className={className} strokeWidth={3} />
+  const Icon = direction === 'UP' ? TrendingUp : direction === 'DOWN' ? TrendingDown : Minus
+  return <Icon className={className} strokeWidth={2.5} />
 }
 
-function Dir({ direction, compact }: { direction: NewsEvent['direction']; compact?: boolean }) {
+function DirBadge({ direction, label }: { direction: NewsEvent['direction']; label?: boolean }) {
   return (
-    <span className="nw-dir" data-tone={dirTone(direction)} data-compact={compact ? 'true' : undefined}>
-      <DirIcon direction={direction} className="h-3.5 w-3.5" />
-      {!compact && direction}
+    <span className="nw-dir" data-tone={dirTone(direction)} data-label={label ? 'true' : undefined}>
+      <DirIcon direction={direction} className="h-4 w-4" />
+      {label && dirWord(direction)}
     </span>
   )
 }
 
-function Stat({ icon: Icon, label, value, tone, testid }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; tone: Tone; testid?: string }) {
+function Stat({ icon: Icon, label, value, tone, testid }: { icon: LucideIcon; label: string; value: string; tone: Tone; testid?: string }) {
   return (
-    <div className="tl-stat" data-tone={tone}>
-      <span className="tl-stat-icon">
+    <div className="nw-stat" data-tone={tone}>
+      <span className="nw-stat-icon">
         <Icon className="h-4 w-4" />
       </span>
-      <div className="min-w-0">
-        <p className="tl-stat-value coco-display" data-testid={testid}>
+      <span className="min-w-0">
+        <b className="coco-display" data-testid={testid}>
           {value}
-        </p>
-        <p className="tl-stat-label">{label}</p>
-      </div>
+        </b>
+        <em>{label}</em>
+      </span>
     </div>
+  )
+}
+
+/* ── Day hero ── */
+
+function DayHero({ events, updatedAt }: { events: NewsEvent[]; updatedAt?: string }) {
+  const dayRef = updatedAt ?? events[0]?.date ?? new Date().toISOString()
+  const day = new Date(dayRef)
+  const highCount = events.filter((e) => e.impact === 'high').length
+  return (
+    <section className="nw-hero coco-rise" style={{ '--d': '40ms' } as React.CSSProperties} data-testid="news-hero">
+      <span className="nw-hero-orb" aria-hidden="true" />
+      <div className="nw-hero-day">
+        <span className="nw-day-tile">
+          <b>{day.getDate()}</b>
+          <em>{day.toLocaleDateString([], { month: 'short' })}</em>
+        </span>
+        <div className="min-w-0">
+          <p className="nw-hero-kicker">Economic calendar</p>
+          <p className="nw-hero-title coco-display">{fmtDay(dayRef)}</p>
+          <span className="nw-live">
+            <i aria-hidden="true" />
+            Live · refreshes every minute
+          </span>
+        </div>
+      </div>
+      <div className="nw-hero-stats">
+        <Stat icon={Newspaper} label="Events" value={String(events.length)} tone="iris" testid="news-stat-events" />
+        <Stat icon={Flame} label="High impact" value={String(highCount)} tone="down" testid="news-stat-high" />
+        <Stat icon={Clock3} label="Updated" value={updatedAt ? fmtTimeShort(updatedAt) : '--:--'} tone="up" />
+      </div>
+    </section>
   )
 }
 
 /* ── Today's events ── */
 
-function EventsSection({ events, updatedAt, onOpen }: { events: NewsEvent[]; updatedAt?: string; onOpen: (e: NewsEvent) => void }) {
+function EventsSection({ events, onOpen }: { events: NewsEvent[]; onOpen: (e: NewsEvent) => void }) {
   if (events.length === 0) return <EmptyState label="No economic events scheduled for today." />
-  const highCount = events.filter((e) => e.impact === 'high').length
-  const dayRef = updatedAt ?? events[0].date
-  const day = new Date(dayRef)
-
   return (
-    <div className="nw-layout" data-testid="news-events">
-      <aside className="nw-side inj-panel">
-        <div className="nw-day">
-          <span className="nw-day-num">{day.getDate()}</span>
-          <div className="min-w-0">
-            <p className="nw-day-title">{fmtDay(dayRef)}</p>
-            <span className="nw-live">
-              <i aria-hidden="true" />
-              Auto-refresh · 1 min
-            </span>
-          </div>
-        </div>
-        <div className="tl-stats">
-          <Stat icon={CalendarDays} label="Events" value={String(events.length)} tone="iris" testid="news-stat-events" />
-          <Stat icon={Flame} label="High" value={String(highCount)} tone="down" testid="news-stat-high" />
-          <Stat icon={Clock} label="Updated" value={updatedAt ? fmtTimeShort(updatedAt) : '--:--'} tone="up" />
-        </div>
-        <p className="nw-note hidden md:block">Tap any release to see forecast vs previous and the AI bias for that window.</p>
-      </aside>
-
-      <ol className="nw-timeline" data-testid="news-timeline">
-        {events.map((ev, i) => (
-          <li key={ev.id} data-tone={impactMeta[ev.impact].tone}>
-            <span className="nw-ev-time" data-testid={`news-event-${i}-time`}>
-              {fmtTimeShort(ev.date)}
-            </span>
-            <span className="nw-ev-node" aria-hidden="true" />
+    <ol className="nw-list" data-testid="news-events">
+      {events.map((ev, i) => {
+        const clock = fmtClock(ev.date)
+        return (
+          <li key={ev.id}>
             <button
               type="button"
               onClick={() => onOpen(ev)}
-              className="nw-ev"
+              className="nw-card"
+              data-tone={impactMeta[ev.impact].tone}
               style={{ '--d': `${Math.min(i * 40, 400)}ms` } as React.CSSProperties}
               data-testid={`news-event-${i}`}
             >
-              <Flag currency={ev.currency} />
-              <span className="nw-ev-body">
-                <span className="nw-ev-meta">
+              <span className="nw-card-time" data-testid={`news-event-${i}-time`}>
+                <b>{clock.time}</b>
+                <em>{clock.period}</em>
+              </span>
+              <span className="nw-card-main">
+                <span className="nw-card-meta">
+                  <Flag currency={ev.currency} />
                   <span className="nw-ccy">{ev.currency}</span>
                   <Chip tone={impactMeta[ev.impact].tone} label={impactMeta[ev.impact].label} />
                 </span>
-                <span className="nw-ev-title">{ev.title}</span>
+                <span className="nw-card-title">{ev.title}</span>
               </span>
-              <Dir direction={ev.direction} compact />
-              <ChevronRight className="nw-ev-arrow h-4 w-4" />
+              <DirBadge direction={ev.direction} />
+              <ChevronRight className="nw-card-arrow h-4 w-4" />
             </button>
           </li>
-        ))}
-      </ol>
-    </div>
+        )
+      })}
+    </ol>
   )
 }
 
@@ -287,24 +308,24 @@ function FundamentalSection({ events, onOpen }: { events: NewsEvent[]; onOpen: (
 
   return (
     <div className="flex flex-col gap-4" data-testid="news-fundamental">
-      <div className="nw-ai inj-panel">
+      <div className="nw-ai coco-rise" style={{ '--d': '60ms' } as React.CSSProperties}>
         <div className="nw-ai-head">
-          <span className="inj-stat-icon">
-            <Sparkles className="h-4 w-4" />
+          <span className="nw-ai-icon">
+            <Atom className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="coco-sub text-[15px] text-white">AI fundamental read</p>
-            <p className="inj-kicker">Forecast vs previous · mapped to currency bias</p>
+            <p className="nw-hero-kicker">AI fundamental read</p>
+            <p className="coco-display text-[17px] text-white">Forecast vs previous, mapped to currency bias</p>
           </div>
         </div>
-        <div className="tl-stats">
-          <Stat icon={ArrowUp} label="Bullish" value={String(up)} tone="up" testid="news-stat-bullish" />
-          <Stat icon={ArrowDown} label="Bearish" value={String(down)} tone="down" testid="news-stat-bearish" />
-          <Stat icon={Gauge} label="Signals" value={String(events.length)} tone="iris" />
+        <div className="nw-hero-stats">
+          <Stat icon={TrendingUp} label="Bullish" value={String(up)} tone="up" testid="news-stat-bullish" />
+          <Stat icon={TrendingDown} label="Bearish" value={String(down)} tone="down" testid="news-stat-bearish" />
+          <Stat icon={Radar} label="Signals" value={String(events.length)} tone="iris" />
         </div>
       </div>
 
-      <div className="nw-fx-list">
+      <div className="nw-fx-grid">
         {events.map((ev, i) => (
           <button
             key={ev.id}
@@ -312,41 +333,38 @@ function FundamentalSection({ events, onOpen }: { events: NewsEvent[]; onOpen: (
             onClick={() => onOpen(ev)}
             className="nw-fx"
             data-tone={dirTone(ev.direction)}
-            style={{ '--d': `${Math.min(i * 50, 400)}ms`, '--p': ev.confidence / 100 } as React.CSSProperties}
+            style={{ '--d': `${Math.min(i * 50, 400)}ms` } as React.CSSProperties}
             data-testid={`news-fx-${i}`}
           >
-            <span className="nw-fx-top">
+            <span className="nw-fx-head">
               <Flag currency={ev.currency} />
-              <span className="nw-ev-body">
-                <span className="nw-ev-meta">
-                  <span className="nw-ccy">{ev.currency}</span>
-                  <Chip tone={impactMeta[ev.impact].tone} label={impactMeta[ev.impact].label} />
-                  <span className="nw-ccy" style={{ color: 'var(--inj-dim)' }}>
-                    {fmtTimeShort(ev.date)}
-                  </span>
-                </span>
-                <span className="nw-ev-title">{ev.title}</span>
+              <span className="nw-card-meta">
+                <span className="nw-ccy">{ev.currency}</span>
+                <Chip tone={impactMeta[ev.impact].tone} label={impactMeta[ev.impact].label} />
               </span>
-              <Dir direction={ev.direction} />
+              <span className="nw-fx-time">{fmtTimeShort(ev.date)}</span>
             </span>
-            <span className="nw-fx-figs">
+            <span className="nw-fx-title">{ev.title}</span>
+            <span className="nw-figs">
               <span className="nw-fig">
-                <em>Forecast</em>
-                <b>{ev.forecast || '—'}</b>
+                <Crosshair className="h-3.5 w-3.5" />
+                <span>
+                  <em>Forecast</em>
+                  <b>{ev.forecast || '—'}</b>
+                </span>
               </span>
               <span className="nw-fig">
-                <em>Previous</em>
-                <b>{ev.previous || '—'}</b>
+                <History className="h-3.5 w-3.5" />
+                <span>
+                  <em>Previous</em>
+                  <b>{ev.previous || '—'}</b>
+                </span>
               </span>
             </span>
-            {ev.confidence > 0 && (
-              <span className="nw-conf">
-                <span className="nw-conf-bar">
-                  <i />
-                </span>
-                <b>{ev.confidence}%</b>
-              </span>
-            )}
+            <span className="nw-fx-foot">
+              <DirBadge direction={ev.direction} label />
+              {ev.confidence > 0 && <ConfidenceRing value={ev.confidence} />}
+            </span>
           </button>
         ))}
       </div>
@@ -354,10 +372,24 @@ function FundamentalSection({ events, onOpen }: { events: NewsEvent[]; onOpen: (
   )
 }
 
+function ConfidenceRing({ value, size = 40 }: { value: number; size?: number }) {
+  const r = 15.9155
+  return (
+    <span className="nw-ring" style={{ width: size, height: size }} data-testid="news-confidence">
+      <svg viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r={r} className="nw-ring-track" />
+        <circle cx="18" cy="18" r={r} className="nw-ring-fill" strokeDasharray={`${value} 100`} />
+      </svg>
+      <b>{value}</b>
+    </span>
+  )
+}
+
 /* ── Detail sheet ── */
 
 function EventDetail({ event, onClose }: { event: NewsEvent; onClose: () => void }) {
   const [mounted, setMounted] = useState(false)
+  const { ref, handlers } = useSheetDrag(onClose)
   useEffect(() => {
     setMounted(true)
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -374,49 +406,48 @@ function EventDetail({ event, onClose }: { event: NewsEvent; onClose: () => void
   return createPortal(
     <div className="tl-modal-root" role="dialog" aria-modal="true" aria-label={event.title}>
       <button type="button" aria-label="Close details" onClick={onClose} className="tl-modal-backdrop" />
-      <div className="inj inj-panel tl-modal" data-testid="news-detail">
-        <span className="tl-modal-grab" aria-hidden="true" />
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Flag currency={event.currency} />
-            <div className="min-w-0">
-              <div className="nw-ev-meta">
-                <span className="nw-ccy">{event.currency}</span>
-                <Chip tone={impactMeta[event.impact].tone} label={`${impactMeta[event.impact].label} impact`} />
+      <div ref={ref} className="inj nw tl-modal nw-detail" data-tone={tone} data-testid="news-detail" {...handlers}>
+        <span className="nw-detail-orb" aria-hidden="true" />
+        <div className="tl-modal-head" data-drag-handle>
+          <span className="tl-modal-grab" aria-hidden="true" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Flag currency={event.currency} size="lg" />
+              <div className="min-w-0">
+                <div className="nw-card-meta">
+                  <span className="nw-ccy">{event.currency}</span>
+                  <Chip tone={impactMeta[event.impact].tone} label={`${impactMeta[event.impact].label} impact`} />
+                </div>
+                <p className="nw-hero-kicker mt-1">
+                  {fmtDay(event.date)} · {fmtTime(event.date)}
+                </p>
               </div>
-              <p className="inj-kicker">
-                {fmtDay(event.date)} · {fmtTime(event.date)}
-              </p>
             </div>
+            <button type="button" onClick={onClose} aria-label="Close" className="tl-close" data-testid="news-detail-close">
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="tl-close" data-testid="news-detail-close">
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <h2 className="coco-sub text-balance text-[18px] leading-snug text-white sm:text-xl" data-testid="news-detail-title">
+        <h2 className="coco-display text-balance text-[20px] leading-snug text-white sm:text-[22px]" data-testid="news-detail-title">
           {event.title}
         </h2>
 
-        <div className="inj-stats">
-          <div className="inj-stat">
-            <span className="inj-stat-icon">
-              <Activity className="h-4 w-4" />
+        <div className="nw-figs nw-figs-lg">
+          <span className="nw-fig">
+            <Crosshair className="h-4 w-4" />
+            <span>
+              <em>Forecast</em>
+              <b>{event.forecast || '—'}</b>
             </span>
-            <div className="min-w-0">
-              <p className="inj-stat-label">Forecast</p>
-              <p className="inj-stat-value coco-mono truncate">{event.forecast || '—'}</p>
-            </div>
-          </div>
-          <div className="inj-stat">
-            <span className="inj-stat-icon">
-              <History className="h-4 w-4" />
+          </span>
+          <span className="nw-fig">
+            <History className="h-4 w-4" />
+            <span>
+              <em>Previous</em>
+              <b>{event.previous || '—'}</b>
             </span>
-            <div className="min-w-0">
-              <p className="inj-stat-label">Previous</p>
-              <p className="inj-stat-value coco-mono truncate">{event.previous || '—'}</p>
-            </div>
-          </div>
+          </span>
         </div>
 
         <div className="nw-bias" data-tone={tone} data-testid="news-detail-bias">
@@ -424,18 +455,18 @@ function EventDetail({ event, onClose }: { event: NewsEvent; onClose: () => void
             <DirIcon direction={event.direction} className="h-7 w-7" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="inj-kicker inj-kicker-soft">Predicted bias · {event.currency}</p>
-            <p className="nw-bias-word coco-display">{event.direction}</p>
-            {event.confidence > 0 && <p className="inj-kicker">Confidence {event.confidence}%</p>}
+            <p className="nw-hero-kicker">Predicted bias · {event.currency}</p>
+            <p className="nw-bias-word coco-display">{dirWord(event.direction)}</p>
           </div>
+          {event.confidence > 0 && <ConfidenceRing value={event.confidence} size={54} />}
         </div>
 
         <div className="nw-reason">
-          <span className="flex items-center gap-2">
-            <BrainCircuit className="h-4 w-4" style={{ color: '#c7adff' }} />
-            <span className="inj-kicker inj-kicker-soft">Fundamental logic</span>
+          <span className="nw-reason-head">
+            <Waypoints className="h-4 w-4" />
+            Fundamental logic
           </span>
-          {event.reasoning}
+          <p>{event.reasoning}</p>
         </div>
 
         <p className="nw-fine">Educational estimate based on forecast vs previous data. Actual releases can move against expectations — always manage your risk.</p>
@@ -461,14 +492,14 @@ function LockedState() {
   return (
     <div className="tl-state" data-testid="news-locked">
       <span className="tl-state-icon">
-        <Lock className="h-6 w-6" />
+        <LockKeyhole className="h-6 w-6" />
       </span>
       <div>
         <h3>News Signals is locked</h3>
-        <p className="mt-1">Your Free account can browse the app, but live news signals require a paid plan.</p>
+        <p className="mt-1">Your Free account can browse the app, but live news signals require an active plan.</p>
       </div>
       <PrimaryButton onClick={() => open({ reason: 'locked' })} icon={KeyRound} testid="news-upgrade-button">
-        Upgrade to unlock
+        Unlock engine
       </PrimaryButton>
     </div>
   )

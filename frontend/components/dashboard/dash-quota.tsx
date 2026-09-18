@@ -85,8 +85,8 @@ export function DashQuota() {
                 className="coco-btn coco-btn-primary w-full sm:w-auto"
                 data-testid="tier-upgrade-link"
               >
-                <KeyRound className="h-4 w-4" />
-                {hasAccess ? 'Upgrade licence' : 'Unlock access'}
+                {!(tier === 'premium' || tier === 'admin') && <KeyRound className="h-4 w-4" data-testid="tier-upgrade-icon" />}
+                {hasAccess ? 'Upgrade Plan' : 'Unlock access'}
                 <ArrowRight className="h-4 w-4" />
               </a>
             </div>
@@ -123,7 +123,7 @@ export function DashQuota() {
                 <KeyRound className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[13.5px] font-semibold text-white">Unlock your licence</span>
+                <span className="block text-[13.5px] font-semibold text-white">Unlock your engine</span>
                 <span className="block text-[12px] text-white/60">Every tool below opens with a daily allowance.</span>
               </span>
               <ArrowRight className="h-4 w-4 flex-none text-[#c4a6ff]" />
