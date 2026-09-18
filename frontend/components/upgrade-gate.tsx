@@ -305,10 +305,6 @@ function LimitView({ featureLabel }: { featureLabel: string | null }) {
           Upgrade Plan
           <ArrowRight className="h-4 w-4" />
         </a>
-        <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="coco-btn coco-btn-ghost w-full" data-testid="upgrade-gate-limit-admin">
-          <Headset className="h-4 w-4" />
-          Contact Admin
-        </a>
       </div>
     </div>
   )
