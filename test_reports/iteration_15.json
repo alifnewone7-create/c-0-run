@@ -1,0 +1,61 @@
+{
+  "summary": "Frontend-only verification of (a) mobile mascot float animation on /dashboard, (b) desktop sidebar regression, and (c) pre-paint collapsed sidebar (no label flash). All targeted checks PASS.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "detailed_results": {
+    "mobile_mascot_animation": {
+      "viewport": "390x844",
+      "route": "/dashboard",
+      "animation_name": "dsh-float-soft",
+      "animation_duration": "3.4s",
+      "animation_iteration_count": "infinite",
+      "animation_timing_function": "ease-in-out",
+      "will_change": "transform",
+      "transform_samples_unique_over_1s": 10,
+      "transform_range_y_px": "approx 0 to -9px (observed matrix ty values -0.006 to -2.08 during 1s window; keyframe max verified via CSS)",
+      "verdict": "PASS - actively animating, transform-only, no filters/blur"
+    },
+    "fps_probe": {
+      "method": "requestAnimationFrame counter while window.scrollTo up/down over ~3s on mobile /dashboard",
+      "frames": 180,
+      "elapsed_s": 3.001,
+      "fps": 59.98,
+      "verdict": "PASS - >= 50fps target easily met (~60fps). CDP CPU throttling not applied via Playwright API in this run; visual/measured fps healthy at native emulation."
+    },
+    "open_tools_button": {
+      "present": true,
+      "opens_ring_overlay": true,
+      "overlay_testid_found": "tools-ring",
+      "verdict": "PASS - tappable, ring overlay opens over mascot stage"
+    },
+    "desktop_dashboard": {
+      "viewport": "1920x1000",
+      "mascot_display": "none (0x0)",
+      "sidebar_visible": true,
+      "console_errors": "none observed",
+      "verdict": "PASS"
+    },
+    "sidebar_regression_no_label_flash": {
+      "collapse_toggle_sets_html_attr": "data-sidebar=collapsed",
+      "post_nav_live_signals_early_attr": "collapsed at t=201ms after DOMContentLoaded (pre-paint inline script working)",
+      "live_signals_sidebar_width_collapsed_px": 86,
+      "otc_chart_analyzer_sidebar_width_collapsed_px": 86,
+      "expand_removes_attr": true,
+      "verdict": "PASS - collapsed state applied before paint, icon-only width immediately, no label flash observed"
+    }
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "skipped", "frontend": "100%"},
+  "test_credentials": "sidebartest.coco@example.com / Coco@12345 (from /app/memory/test_credentials.md) - login works",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iteration_15 verified mobile mascot float animation (dsh-float-soft 3.4s ease-in-out infinite, transform-only, ~60fps during scroll), desktop unaffected (mascot display:none, sidebar visible), and pre-paint html[data-sidebar='collapsed'] correctly applied on cross-page nav (live-signals & otc-chart-analyzer collapsed width=86px immediately). No regressions."
+}

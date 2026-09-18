@@ -1,0 +1,81 @@
+/* ── Mobile performance pass (phones only) ────────────────────────────────
+   Loaded LAST so these rules win by source order.
+   Rule of thumb that fixed the lag: never keep a backdrop-filter on an
+   element that lives inside a scrolling list / a fixed dock, and never
+   animate box-shadow on many elements at once.                          */
+
+@media (max-width: 767px) {
+  /* 1 ─ blurred glass out of scrollable lists, sticky heads and docks */
+  .mk[data-variant='chips'] .mk-item {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background:
+      linear-gradient(158deg, rgba(139, 92, 255, 0.2), rgba(12, 6, 32, 0) 58%),
+      rgb(13, 7, 34);
+    box-shadow: rgba(255, 255, 255, 0.06) 0 1px 0 0 inset;
+  }
+  .mk-head {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(180deg, rgb(20, 11, 50) 0%, rgb(20, 11, 50) 80%, rgba(20, 11, 50, 0) 100%);
+  }
+  .fs-dock {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(180deg, rgba(30, 18, 70, 0.99), rgba(13, 7, 32, 0.99));
+  }
+  .sig-picker-backdrop,
+  .tl-modal-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(7, 4, 26, 0.94);
+  }
+  .coco-dark .coco-card,
+  .coco-glass,
+  .coco-tape,
+  .market-tile {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* 2 ─ no per-frame shadow/filter pulses repeated over long lists */
+  .mk-live i,
+  .inj-dir-tag-text i,
+  .sig-bcard-badge i,
+  .inj-verdict-kicker i {
+    animation: none !important;
+  }
+  .inj-btn-sheen {
+    display: none;
+  }
+  .mk-lux-pulse {
+    filter: none;
+  }
+  .inj-verdict-glow {
+    animation: none;
+    filter: blur(18px);
+  }
+  .inj-seg-item[data-active='true'] .inj-seg-glyph * {
+    animation: none !important;
+  }
+
+  /* 3 ─ cheaper list paint: drop the soft drop shadows while scrolling */
+  .mk-item,
+  .fs-card,
+  .fsx,
+  .sig-bcard,
+  .sig-scard {
+    box-shadow: none;
+  }
+
+  /* 4 ─ strategy ring: keep only the image layer on the GPU */
+  .stg-ring .dsh-ring-face {
+    box-shadow: none;
+  }
+  .stg-ring .dsh-ring-back {
+    background: #150c2c;
+  }
+  .stg-ring .dsh-ring-panel {
+    animation: none;
+  }
+}

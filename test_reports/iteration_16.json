@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only regression on the new /dash/card-*-v2.webp tool card artwork inside the /dashboard 'Open tools' rotating ring. Logged in as sidebartest.coco@example.com on mobile 390x844, opened the ring, and verified all 6 cards (injector/analyzer/live/future/news/money) load with HTTP 200, naturalWidth=480, naturalHeight=720, object-fit: cover, complete=true. Captured 5 rotating-ring screenshots over ~12s — all 6 titles ('COCO INJECTOR', 'CHART ANALYZER', 'LIVE SIGNAL', 'FUTURE SIGNAL', 'NEWS SIGNAL', 'MONEY MANAGEMENT') use the same extended techno display font with the same letterspaced 'COCO AI' brand top-left; visually consistent style. Live Signal card artwork fills the full 480x720 card with no empty band. Tapping the front card navigated to /injector (verified). Regression: desktop 1920x1080 dashboard shows the sidebar (aside visible), hero shows 'Open tools' button, /live-signals also renders sidebar. No 404s for any /dash/card-*.webp, no console errors captured.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "3D ring click hit-testing: on the rotating ring, when trying to tap a non-front card (e.g. Chart Analyzer) via its data-testid, the click can be routed to whichever card is z-frontmost due to CSS 3D transform stacking. This is expected behavior for the current design but worth noting — automated tap-through-testid on ring cards is not deterministic; only the front-facing card is reliably tappable. Users are guided ('SWIPE TO ROTATE - TAP A CARD TO OPEN') so likely fine."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "sidebartest.coco@example.com / Coco@12345 (Firebase)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 new tool card images (/dash/card-{injector,analyzer,live,future,news,money}-v2.webp) verified serving at 200 with native 480x720 dimensions and object-fit cover on both the mobile ring and via image data. TOOL_CARDS in frontend/components/dashboard/dash-data.ts already point to the -v2.webp paths; no stale references to non-v2 files remain in the codebase. Live Signal card artwork now full-bleed (no empty band). Consistent techno title font across all 6. Only observed nuance: on desktop the 'Open tools' button locator matched a hidden mobile FAB when using .first — use a more specific selector or scope to hero if writing new tests.",
+  "rca of the issue": "N/A — no bugs found for this iteration."
+}

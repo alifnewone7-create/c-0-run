@@ -1,0 +1,38 @@
+{
+  "summary": "Comprehensive frontend testing of the redesigned /dashboard page on both mobile (390x844) and desktop (1920x1000) viewports. Logged in as premium test user (dashtest.coco@example.com). All requested testids, flows, layouts, navigation, tools ring, quota gauges, sidebar collapse persistence, profile sheet, and both logout paths were verified end-to-end. No runtime/page errors detected on /dashboard. All acceptance criteria from the review request PASS.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "dash-profile-sheet.tsx: The backdrop <button class='dsh-backdrop'> is a full-viewport button rendered UNDER the sheet in DOM stacking order. Real users can tap the visible dim area to close the sheet (works correctly on both mobile top area and desktop outside modal), but automated tools like Playwright target the element's geometric center which lands under the sheet and gets intercepted. Consider attaching the backdrop close handler to the outer .dsh-sheet-root container (with e.target === currentTarget guard) instead of a separate button to make the click surface more predictable and testable.",
+    "Nice-to-have: expose a data-testid on the mobile bottom-sheet grab handle and consider a swipe-down-to-close gesture for the mobile bottom sheet.",
+    "Collapsed sidebar hides labels via width/overflow (width ~61px) rather than display:none. This works visually and is fine, but if any automated test asserts computed display it will fail; consider adding aria-hidden='true' to labels when collapsed for a11y."
+  ],
+  "verified_flows": [
+    "Login redirect to /dashboard renders data-testid=dashboard-page on both mobile and desktop",
+    "MOBILE: dash-mobile-header, mobile-avatar-btn, mobile-header-name/email/tier, dash-mascot (mascot img naturalWidth=525), open-tools-btn visible; dash-desktop-hero and dash-sidebar not visible; old dashboard-tools not present",
+    "MOBILE profile-sheet: all inner testids (name, email, verified-pill, verified-icon, tier-chip, copy, close) visible; profile-sheet-close closes; tapping the dim backdrop area (y=50 above the bottom sheet) closes; Escape also closes",
+    "Tools ring (mobile & desktop): all 6 tool cards render with images (naturalWidth=480); tools-ring-label rotates over time (e.g. 'Money Management' -> 'News Signal'); tools-ring-close closes overlay",
+    "Ring pointer-tap navigation: verified navigation actually fires (tool-card-money -> /management; another card tap -> /news-signals). The <8px pointer-move detection in dash-tools-ring.tsx works correctly",
+    "Quota (mobile): dashboard-quota visible, 5 gauges (quota-gauge-otc-chart-analyzer, quota-gauge-real-chart-analyzer, quota-gauge-future-signals, quota-gauge-live-signals, quota-gauge-injector) with quota-remaining-*=50, quota-reset-chip present; layout is 2-column with 5th spanning full width (verified via bounding boxes); no horizontal overflow at 390px",
+    "DESKTOP: dash-sidebar with all 8 sidebar-link-* items; sidebar-link-dashboard is-active; sidebar-toggle adds is-collapsed to aside and persists 'coco_sidebar_collapsed'=1 in localStorage across reload; collapsed link width ~61px (icon-only)",
+    "DESKTOP: dash-desktop-hero shows name/verified-icon, desktop-hero-tier text = 'Premium'; desktop-copy-email click does not throw; desktop-avatar-btn / sidebar-profile-btn open profile-sheet; backdrop click outside modal closes it",
+    "DESKTOP: quota gauges laid out in 5-column row (all y=573); mobile header/mascot not visible; no legacy nav-shell on /dashboard",
+    "Sidebar link nav: sidebar-link-live-signals -> /live-signals works",
+    "Logout: profile-sheet-logout redirects to /login; sidebar-logout redirects to /login",
+    "Console: 0 page errors and 0 console.error entries on /dashboard across mobile and desktop sessions"
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "dashtest.coco@example.com / CocoTest#2026 (premium)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Dashboard redesign is fully functional. If future tests want to click ring cards via Playwright, note the ring rotates continuously so the visible front card is unpredictable; either freeze animation (remove/override .dsh-ring animation) or click any card at its bounding-box center — navigation logic works, just the destination equals whichever card is currently near the front. Quota testids use the tool slug (otc-chart-analyzer, real-chart-analyzer, future-signals, live-signals, injector) — 5 gauges total (no gauge for management/news-signals). Backdrop click on mobile via Playwright must target a coordinate outside the sheet region (e.g. mouse.click(195,50)), not the backdrop element center.",
+  "rca of the issue": "No functional issues found. Initial impression that backdrop click failed to close the profile sheet was a Playwright testing artifact: the .dsh-backdrop button occupies the full viewport but is DOM-stacked under .dsh-sheet, so element-center click lands under the sheet and is intercepted. Verified backdrop close works correctly when the click coordinate falls in the visible dim area (mobile top / desktop margins), which is the actual user path."
+}

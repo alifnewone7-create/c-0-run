@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend-only regression on /news-signals for two mobile bugs (timeline time/dot overlap and lag). Login OK. Feed loaded 25 events (auto-refresh 06:21).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "mobile_390x844": {
+      "news_events_rendered": true,
+      "horizontal_overflow": false,
+      "scrollWidth": 390,
+      "timeline_overlap_first_5": "PASS — for i=0..4, time.right=58 <= node.left=62 (4px gap). No overlap.",
+      "scroll_perf_events": {"frames_per_sec": 29, "longTasks_ms": [89, 90, 71, 89, 56], "note": "29 fps is 1 frame under the soft 30 threshold; longtasks all well under 200ms. Acceptable but borderline."},
+      "scroll_perf_fundamental": {"frames_per_sec": 30},
+      "fundamental_tab": "PASS — [data-testid=news-fundamental] rendered, news-fx-0 present with forecast/previous/confidence (GBP CPI y/y forecast 3.1% prev 2.9% 73%). scrollWidth=390 (no overflow).",
+      "event_detail": "PASS — click news-event-0 opened news-detail; news-detail-close closed it."
+    },
+    "desktop_1920x800": {
+      "news_events_rendered": true,
+      "horizontal_overflow": false,
+      "scrollWidth": 1920,
+      "timeline_overlap_first_5": "PASS — time.right=874 <= node.left=880 (6px gap)."
+    }
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": ["Mobile event-list scroll frames measured at 29 fps (target 30+). Not a functional regression but if further smoothing is desired, review remaining transitions/box-shadows on li rows. LongTasks were 56–90ms, all under 200ms."],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100%"},
+  "test_credentials": "cocotest_budty6y6@example.com / TestPassbudty6y6123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All fixes validated on 2026-01 preview URL. Timeline uses CSS grid; no absolute-positioning overlap. Feed served 25 events today so overlap check was fully covered (no news-empty fallback needed)."
+}

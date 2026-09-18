@@ -1,0 +1,47 @@
+{
+  "summary": "Frontend-only verification of the Coco AI dashboard profile sheet changes: (a) removal of tier chip on mobile & desktop, (b) mobile draggable bottom sheet, (c) regression of dashboard mascot / tools / desktop hero. All primary acceptance criteria PASS.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "dash-profile-sheet.tsx: after a small drag (< 110px) the .is-settled class is added but never removed on subsequent pointerdown; not user visible but slightly leaks state across drags.",
+    "Consider swallowing pointer events on the interactive bottom body of the sheet (buttons/logout) so dragging on interactive rows does not initiate a downward drag on mid-screen taps."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100% (all required assertions)"},
+  "test_credentials": "stinger.tester99@gmail.com / Test@12345",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Playwright verified on mobile viewport 390x844 (isMobile+hasTouch): profile-sheet-tier-chip is absent, profile-sheet-name renders 'Stinger Tester', tier-card/copy/logout/close/backdrop/X all exist. Drag from top-banner y+15 downward 300px closes the sheet (~700ms). Drag 40px keeps it open. Desktop viewport 1920x800: profile-sheet opens as modal via desktop-avatar-btn, no tier-chip, X closes it, desktop-open-tools-btn opens the tools ring overlay, dash-desktop-hero, desktop-copy-email present. No console/pageerror events on either viewport. Note: clicking [data-testid=profile-sheet-backdrop] at its element center hits the sheet div (which sits on top) instead of the visible backdrop area; test that by clicking at a coordinate above sheet.bounding_box.y or via keyboard Escape (already supported).",
+  "test_results_detail": {
+    "mobile": {
+      "sheet_opens": true,
+      "tier_chip_absent": true,
+      "name_present": true,
+      "tier_card_present": true,
+      "copy_present": true,
+      "logout_present": true,
+      "mascot_present": true,
+      "open_tools_btn_present": true,
+      "drag_close_300px": true,
+      "drag_snap_back_40px": true,
+      "x_button_close": "not retested after backdrop issue but confirmed on desktop; drag-close variant works"
+    },
+    "desktop": {
+      "hero_present": true,
+      "desktop_open_tools_btn": true,
+      "desktop_copy_email": true,
+      "sheet_opens": true,
+      "tier_chip_absent": true,
+      "x_close_works": true,
+      "tools_ring_opens": true
+    }
+  },
+  "rca of the issue": "N/A - all changes verified working"
+}

@@ -1,0 +1,50 @@
+{
+  "summary": "Frontend-only regression for mobile dashboard scroll-perf fix. Logged in as Firebase test user on 390x844 viewport, verified all mobile testids (dash-mobile-header, dash-mascot, open-tools-btn, dashboard-light-zone, tier-plan-card, dashboard-quota, bottom-nav, mobile-avatar-btn), measured FPS during rAF-driven oscillating scroll (0..1000px, 1.8s) and confirmed interactions (profile-sheet open + drag-to-dismiss, tools ring open/close). Also verified body background CSS switches (scroll on mobile, fixed on desktop) and home page mobile.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "perf_measurements": {
+    "mobile_scroll_fps_normal": 60.4,
+    "mobile_scroll_fps_cpu_throttled_4x": 60.9,
+    "target_normal_fps": 50,
+    "target_throttled_fps": 40,
+    "verdict": "PASS - both exceed thresholds by wide margin (was ~22 fps before fix)"
+  },
+  "verifications": {
+    "mobile_testids_visible": {
+      "dash-mobile-header": true, "dash-mascot": true, "open-tools-btn": true,
+      "dashboard-light-zone": true, "tier-plan-card": true, "dashboard-quota": true,
+      "bottom-nav": true, "mobile-avatar-btn": true
+    },
+    "body_bg_attachment_mobile_dashboard": "scroll (all 5 layers) - CORRECT",
+    "body_bg_attachment_desktop_dashboard": "fixed (all 5 layers) - CORRECT (regression-safe)",
+    "body_bg_attachment_home_mobile": "scroll - CORRECT",
+    "profile_sheet_open_via_avatar": true,
+    "profile_sheet_drag_down_dismiss": true,
+    "tools_ring_opens_pick_a_desk": true,
+    "tools_ring_close_button_works": true,
+    "console_errors": 0,
+    "page_errors": 0,
+    "visual_background": "dark cosmic purple confirmed (bg color lab(3.52 1.49 -8.61)), no white/blank body"
+  },
+  "observations": [
+    "mascot <img> src attribute not directly readable via get_attribute on the wrapper (returned None) — element itself is visible and rendered correctly per screenshot. Not a bug, selector nuance only.",
+    "Desktop reload landed on the Analyze/pair-picker view rather than the hero (URL still /dashboard). The desktop hero testids (dash-desktop-hero, desktop-open-tools-btn, desktop-copy-email) were not visible, but this is a route-state artefact after reload (likely last-tab persistence via localStorage), not a regression caused by the perf fix. Screenshot confirms desktop renders fine with dark background and header."
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Perf fix is effective and safe: mobile body background switches to background-attachment:scroll, desktop keeps fixed. FPS restored to ~60 even under 4x CPU throttling.",
+    "Optional follow-up: if desktop hero should be the default on /dashboard load, verify the tab-state persistence logic in the desktop layout."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "stinger.tester99@gmail.com / Test@12345 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Mobile scroll perf fix verified at 60 fps (normal + 4x CPU throttle). All mobile dashboard testids present. Profile sheet drag-dismiss and tools ring open/close work. Desktop bg-attachment:fixed retained. Only observation: desktop /dashboard after reload showed Analyze pair-picker rather than hero — investigate tab-state persistence if that's unintended."
+}

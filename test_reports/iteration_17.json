@@ -1,0 +1,64 @@
+{
+  "summary": "Frontend-only verification of the new Strategy selector (Coco SmartFlow / AlphaGrid / Auralis) on Live Signals, Coco Injector and Future Signals, plus the new 2-step Future Signals flow. All primary acceptance criteria pass on both mobile (390x844) and desktop (1920x1000). Login worked with the provided sidebartest credentials.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Signal generation end-to-end (live-generate-button, future-generate-button)", "issue": "After clicking Generate on /live-signals and /future-signals the strategy-used chip was not found within 12s and no 'upgrade' gate text was matched either. Test account is a fresh free-tier user, so the daily quota gate (which renders as a modal, not inline text) is the most likely explanation and matches the reviewer note about expected free-tier behaviour. Injector generate button remained disabled (duration/setup step required, out of scope for this iteration).", "affected_selectors": ["[data-testid=live-strategy-used]", "[data-testid=future-strategy-used]", "[data-testid=injector-strategy-used]"]}
+    ],
+    "design_issues": []
+  },
+  "verified_functionality": {
+    "future_signals_step1": {
+      "future_setup_absent": true,
+      "dock_subtitle": "Step 1 of 2 · pick at least one pair",
+      "next_button_disabled_initially": true,
+      "next_button_enabled_after_pick": true,
+      "mobile_overflow": "390 <= 390",
+      "desktop_overflow": "1920 <= 1920"
+    },
+    "future_signals_step2": {
+      "future_setup_present": true,
+      "future_strategy_present": true,
+      "back_button_returns_to_market_grid": true,
+      "dock_subtitle_updates_to_strategy": "Coco AlphaGrid · Quotex observed",
+      "mobile_overflow": "390 <= 390",
+      "desktop_overflow": "1920 <= 1920"
+    },
+    "strategy_deck": {
+      "prefixes_ok": ["future", "live", "injector"],
+      "three_options_present": true,
+      "default_smartflow_aria_checked": true,
+      "switch_to_alphagrid_updates_aria_and_note": true,
+      "switch_to_auralis_updates_aria_and_note": true,
+      "note_texts_match_lib_strategies": true
+    },
+    "strategy_images": {
+      "smartflow_natural_wh": "420x560 complete=true (served as base64 data URI in production build)",
+      "alphagrid_natural_wh": "420x560 complete=true",
+      "auralis_natural_wh": "420x560 complete=true",
+      "note": "Next.js inlines these small webps as data URLs — HTTP 200 check does not apply, but naturalWidth>0 and complete=true confirm they load"
+    },
+    "regression": {
+      "desktop_sidebar_visible": true,
+      "no_console_errors_captured": true
+    }
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: confirm free-tier daily quota gate behaviour on /live-signals + /future-signals Generate — modal appears but no inline 'upgrade' text; consider adding a data-testid on the gate modal so future automation can assert it explicitly.",
+    "Optional: expose a data-testid on the injector duration/setup step so downstream tests can drive it to the Inject button."
+  ],
+  "critical_code_review_comments": [
+    "components/strategy-select.tsx: img has empty alt and aria-hidden on the wrapper — acceptable since the visible name/tag exist, but the <img> is missing `loading=\"lazy\"` which could help LCP on mobile.",
+    "future-signals-view.tsx: `scrollTop()` uses requestAnimationFrame + scrollIntoView on every phase change; harmless but could cause layout thrash on step transitions.",
+    "strategy is currently client-only state and NOT sent to /api/signals/* — confirmed intentional per reviewer note; add a TODO in the file so a future dev doesn't miss it."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% on the required strategy + 2-step flow checks; generate end-to-end not fully asserted due to likely free-tier gate"},
+  "test_credentials": "sidebartest.coco@example.com / Coco@12345 (works, lands on /dashboard)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Strategy selector deck + Future Signals 2-step flow are all working across mobile & desktop. Only remaining gap is asserting the strategy-used chip after Generate on a paid/unlimited tier; the free sidebartest account likely trips the daily quota modal after a few runs, and that modal has no inline 'upgrade' text so use a data-testid on the gate modal or a fresh tier for that check. Injector's Inject button stayed disabled because the duration step wasn't driven — extend the test with the duration selector before pressing inject."
+}

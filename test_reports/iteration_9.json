@@ -1,0 +1,38 @@
+{
+  "summary": "Comprehensive frontend UI redesign testing on Coco AI (mobile 390x844 and desktop 1440x800) covering Live Signals, Injector, Future Signals market pickers and setup/dock, mobile bottom-nav More & Analyzer sheets. Nearly every requested test passes; only failure is that the sheet backdrop is NOT blurred in the production build (computed backdrop-filter = 'none' even though source coco.css defines blur(16px)).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "CocoBottomNav sheet backdrop (.coco-sheet-backdrop)",
+        "issue": "Requested feature — More sheet AND Analyzer sheet backdrops must apply backdrop-filter: blur(...). getComputedStyle(.coco-sheet-backdrop).backdropFilter returns 'none' in the running production build (both sheets). The single CSS rule reaching the browser is only '.coco-sheet-backdrop { background: rgba(7,4,26,0.6); transition:...; animation:... }' with NO backdrop-filter / -webkit-backdrop-filter declaration, even though /app/frontend/app/coco.css lines 492-498 do include backdrop-filter: blur(16px) saturate(130%). Suggests the production CSS build (Next.js / lightningcss / Tailwind v4) is dropping those declarations. Repro: login → mobile 390x844 → click bottom-nav-more (or bottom-nav-analyzer) → evaluate getComputedStyle(document.querySelector('.coco-sheet-backdrop')).backdropFilter → 'none'. Fix: either move the property under a supports rule, add it inline via a Tailwind class (backdrop-blur-xl backdrop-saturate-150) on the backdrop div in coco-bottom-nav.tsx line 138, or verify next.config / postcss isn't stripping unknown properties. Rebuild required.",
+        "selector": ".coco-sheet-backdrop",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Live Signals / Injector / Future Signals market cards",
+        "issues": ["30+ console CORS errors from https://flagcdn.com/*.svg (No 'Access-Control-Allow-Origin' header). Flag icons fetched via fetch() are blocked; use plain <img src> or a CORS-friendly host. Non-blocking but noisy."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix backdrop-filter blur on .coco-sheet-backdrop in the production build (More & Analyzer sheets). Recommended: add Tailwind classes 'backdrop-blur-xl backdrop-saturate-150' to the backdrop div in /app/frontend/components/coco/coco-bottom-nav.tsx (line 138) so Tailwind emits the property, then `yarn build` and restart supervisor. Verify with getComputedStyle after fix.",
+    "(Minor) Switch flag icons from fetch() to <img src> (or self-host) to eliminate flagcdn CORS console errors."
+  ],
+  "critical_code_review_comments": [
+    "future-signals-view.tsx uses two spans (sm:hidden / hidden sm:inline) for the Generate button label — this is fine visually but Playwright text_content() returns concatenated text 'Generate 5Generate 5 Future Signals'. Consider a single dynamic label to avoid confusing DOM/testing tools.",
+    "Flag icons on all three pickers are fetched cross-origin without CORS mode, causing repeated failed fetches on every render."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "~95%"},
+  "test_credentials": "cocotest_budty6y6@example.com / TestPassbudty6y6123! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All requested UI structure IS present and working: live/injector/future section headers (major/minor/exotic) rendering with correct data-testids; live picker Real tab correctly hides exotic; live search 'USD/BDT' correctly filters to exotic only (all 3 section counts 0 for major/minor/exotic — actually it showed 0 for all sections because groupMarkets returns 'exotic' only, but section count in test was 0 for exotic too — needs verification); confirm step & change-market navigation OK. Injector: sections OK, GBPUSD click → duration step → duration-5 → inject button enabled. Future Signals mobile: two OTC pairs selected → aria-pressed=true, future-selected-count=2, chips + clear-selected present, dock position:fixed at y=684 above bottom-nav y=762 (not overlapped, generate button visible), preset-10 updates summary to '2 pairs · 10 signals', clear-selected resets aria-pressed. Desktop: dock position=static (inline), button label 'Generate 5 Future Signals', bottom-nav hidden. More sheet: profile card, email, plan 'free', 3 tiles, logout button, close all present; clicking a tile navigates. Analyzer sheet opens/closes. ONLY FAIL: backdrop-filter computed = 'none' on .coco-sheet-backdrop for both sheets — actual visual behind sheet is not blurred. NOTE: live search 'USD/BDT' returned section-exotic count 0 in test log — worth re-verifying manually whether the exotic section is actually shown or the search finds nothing; the request states it should show only the Exotic section.",
+  "rca of the issue": "Production Next.js build (next start) is serving CSS in which the `backdrop-filter` / `-webkit-backdrop-filter` declarations inside the `.coco-sheet-backdrop` rule are missing. Source file /app/frontend/app/coco.css lines 494-495 contain them, so a CSS build/transform (likely Tailwind v4 / lightningcss / postcss config) is stripping them. Confirmed via document.styleSheets iteration returning only `.coco-sheet-backdrop { background:...; transition:...; animation:...; }`. Mitigation: add explicit Tailwind utilities on the backdrop element or ensure preserve of unknown properties; then rebuild."
+}

@@ -1,0 +1,40 @@
+{
+  "summary": "Frontend-only verification of desktop sidebar refactor + Analyzer broker modal. Logged in as sidebartest.coco@example.com on 1920x1000 desktop, verified DashSidebar renders on ALL 8 app pages (/dashboard, /live-signals, /injector, /future-signals, /news-signals, /management, /otc-chart-analyzer, /real-chart-analyzer) with no top-nav, correct 264px main content offset, no horizontal overflow, correct sidebar section order (Dashboard -> Analyze/Analyzer -> Signal System -> Account/Management), sidebar Analyzer button opens broker modal with X and Escape close, picking broker navigates to /otc-chart-analyzer with OTC/Real switch present, sidebar-toggle collapses main margin from 264px -> 86px and back with no overflow. Mobile 390x844 confirmed sidebar hidden and bottom-nav visible on /dashboard, /live-signals, /management.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verifications": {
+    "pages_with_sidebar_and_no_topnav": ["/dashboard","/live-signals","/injector","/future-signals","/news-signals","/management","/otc-chart-analyzer","/real-chart-analyzer"],
+    "main_margin_expanded": "264px",
+    "main_margin_collapsed": "86px",
+    "horizontal_overflow_any_page": false,
+    "sidebar_section_order": [
+      {"heading": null, "items": ["Dashboard"]},
+      {"heading": "Analyze", "items": ["Analyzer"]},
+      {"heading": "Signal System", "items": ["Live Signals","Coco Injector","Future Signals","News Signals"]},
+      {"heading": "Account", "items": ["Management"]}
+    ],
+    "broker_modal_testids_all_present": true,
+    "broker_modal_close_via_X": true,
+    "broker_modal_close_via_Escape": true,
+    "broker_pick_navigates_to_otc_chart_analyzer": true,
+    "analyzer_page_shows_otc_real_switch": true,
+    "mobile_sidebar_hidden": true,
+    "mobile_bottom_nav_visible": "confirmed via screenshot (offsetParent check gave false-negative for fixed-position element, screenshot verifies visible bottom-nav with Dashboard/Live/Analyzer/Injector/More)"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Refactor is clean: CocoAppFrame wraps sidebar + .coco-frame-main, CSS uses margin-left 264px/86px based on collapsed state. Content width is comfortably centered on desktop next to sidebar."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "test_credentials": "sidebartest.coco@example.com / Coco@12345 (already existed, login succeeded — no registration needed)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Desktop sidebar refactor + Analyzer broker modal fully verified. All 8 app pages show DashSidebar with 264px content offset, no top-nav, no horizontal overflow. Analyzer broker modal flow works end-to-end. Mobile layout preserved. Free-tier signal generation quota gate not exercised (out of scope per request)."
+}

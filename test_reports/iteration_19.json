@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only UI verification for Coco AI Live Signals, Coco Injector and Future Signals redesigns. All 6 requested acceptance criteria verified on desktop (1920x1080) and mobile (390x844). Login via premium test user OK; all data-testids present; no console errors; no horizontal overflow on 390px.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "StatTile: `inj-stat-grad` class is applied on the outer wrapper div while `data-testid` (live-rule-duration/live-rule-mtg) is on the inner <p> value. Any automated test looking for the gradient class via the testid element will fail — consider moving the testid to the outer wrapper or exposing a `data-tone` attribute at the testid level for easier testing.",
+    "future-chip-remove behavior when >4 selected: removing one chip while collapsed keeps visible count at 4 (backfills from remaining). Works as intended but might surprise; confirmed toggle updates 'See all N pairs' count correctly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100%"},
+  "test_credentials": "stgperf.coco@example.com / StgPerf#2026 (premium)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Market card testids follow pattern `{page}-market-{type}-{BASE}{QUOTE}` (e.g. `live-market-otc-NZDCHF`, `future-market-otc-EURUSD`), NOT `market-card-*`. Update selectors accordingly. Analyzing stage is ~10s for Live/Injector and ~10s for Future. Verified: (1) Live confirm — stg-head-icon present, no 'Engine mode' chip, generate button has svg icon, StatTile wrappers use inj-stat-grad; (2) Live result — signal-broker-bar hidden, live-broker-card above live-verdict, live-strategy-used (sig-scard) below stats showing 'Coco SmartFlow', no inj-chip, reset restores broker bar; (3) Injector — no broker card, strategy-used below entry-time/duration, no Engine mode chip; (4) Future step2 — .fs-sel-grid with 2 cols (141px 141px on mobile), initial 4 items visible with 'See all 6 pairs' toggle expanding to 6 and collapsing back, dock-summary shows '6 pairs · 5 signals', generate button svg present; (5) Future result — broker-bar hidden, future-broker-card + future-strategy-used present, Build New Queue restores broker bar; (6) No horizontal overflow at 390px on Live confirm or Future step2, no console errors."
+}

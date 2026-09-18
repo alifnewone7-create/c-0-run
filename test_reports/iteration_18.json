@@ -1,0 +1,23 @@
+{
+  "summary": "Frontend-only verification of the new Strategy field + 3D card ring across /live-signals, /injector, and /future-signals. All 8 requested test areas passed. Field renders after market pick (+future-next-button) with default 'Coco SmartFlow' visible in <prefix>-strategy-value and matching note; tapping opens the ring dialog with all 5 faces (smartflow, alphagrid, auralis, zenx, algoryx) whose images are all fully loaded (naturalWidth>0). Escape, close button, and backdrop all dismiss the ring without changing the selection. Click at centre of stage always selects the currently-front card and closes the ring — verified two distinct picks (Coco Algoryx, then after ~4.5s rotation Coco Zenx) on each of the 3 pages. FPS probe at 390x844 with the ring open returned ~60 fps on live / injector / future. Backdrop uses solid rgb(7,4,26) with backdrop-filter:none (opaque, nothing behind bleeds through). Post-generation result chips <prefix>-strategy-used display the picked strategy on all three pages. No horizontal overflow on mobile or 1920x1080 desktop, ring panel fits viewport, no console errors captured.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "strategy-select.tsx (~309 lines) is fine size-wise but the ring animation depends on the click's mouse.click landing on the front-most face — this works because faces at ±72deg are z-transformed behind the front one. If a face is enlarged or the ring is dragged mid-animation, hit-testing may fall on a side card; current onClick + data-idx fallback correctly handles that.",
+    "The ring uses a body scroll lock (document.body.style.overflow='hidden') but does not restore any prior inline overflow value — acceptable since default is '' but worth noting for nested modals."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "sidebartest.coco@example.com / Coco@12345 (PREMIUM)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Playwright note: session cookies do NOT persist between separate mcp_browser_automation calls — the login flow must be re-run at the start of every script. To pick a non-default strategy via the ring, click the field, wait ~3s (~60deg auto-rotation ≈ one card face) then page.mouse.click at the centre of <prefix>-strategy-stage. Result chip testids: live-strategy-used / injector-strategy-used / future-strategy-used — generation takes up to ~30s (live/injector) and ~40s (future); use wait_for_selector with a generous timeout.",
+  "rca of the issue": "n/a — no bug found"
+}
