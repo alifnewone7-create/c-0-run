@@ -8,6 +8,7 @@ import { LogOut, PanelLeftClose, PanelLeftOpen, BadgeCheck, ScanEye } from 'luci
 import { useAuth } from '@/components/auth-provider'
 import { SIDEBAR_SECTIONS } from '@/components/dashboard/dash-data'
 import { DashBrokerModal } from '@/components/dashboard/dash-broker-modal'
+import { LogoutConfirm } from '@/components/coco/logout-confirm'
 import { TIER_LABEL } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 
@@ -46,10 +47,12 @@ export function DashSidebar({
   const router = useRouter()
   const { profile, logout, tier } = useAuth()
   const [brokerOpen, setBrokerOpen] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const analyzerActive = pathname === '/otc-chart-analyzer' || pathname === '/real-chart-analyzer'
 
   async function handleLogout() {
     await logout()
+    setConfirmLogout(false)
     router.push('/login')
   }
 
@@ -159,7 +162,7 @@ export function DashSidebar({
         </button>
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => setConfirmLogout(true)}
           className="dsh-side-logout"
           title={collapsed ? 'Log out' : undefined}
           data-testid="sidebar-logout"
@@ -178,6 +181,12 @@ export function DashSidebar({
           setBrokerOpen(false)
           router.push('/otc-chart-analyzer')
         }}
+      />
+
+      <LogoutConfirm
+        open={confirmLogout}
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={handleLogout}
       />
     </aside>
   )

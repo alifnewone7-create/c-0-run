@@ -19,15 +19,33 @@ import {
   Megaphone,
   Wallet,
   Sparkles,
+  BadgeCheck,
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
+import { LogoutConfirm } from '@/components/coco/logout-confirm'
 import { BROKERS, storeBroker, type BrokerId } from '@/lib/brokers'
+import { TIER_LABEL } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
 
 const MORE_LINKS = [
-  { label: 'Future Signals', href: '/future-signals', icon: Orbit },
-  { label: 'News Signals', href: '/news-signals', icon: Megaphone },
-  { label: 'Management', href: '/management', icon: Wallet },
+  {
+    label: 'Future Signals',
+    desc: 'Batch-generate upcoming entries',
+    href: '/future-signals',
+    icon: Orbit,
+  },
+  {
+    label: 'News Signals',
+    desc: 'Economic events and bias calls',
+    href: '/news-signals',
+    icon: Megaphone,
+  },
+  {
+    label: 'Management',
+    desc: 'Capital plan and MTG tracker',
+    href: '/management',
+    icon: Wallet,
+  },
 ]
 
 const ANALYZERS = [
@@ -38,8 +56,9 @@ const ANALYZERS = [
 export function CocoBottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { profile, logout } = useAuth()
+  const { profile, logout, tier } = useAuth()
   const [sheet, setSheet] = useState<'more' | 'analyzer' | null>(null)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [closing, setClosing] = useState(false)
   const [drag, setDrag] = useState(0)
   const dragging = useRef(false)
@@ -117,8 +136,11 @@ export function CocoBottomNav() {
 
   async function handleLogout() {
     await logout()
+    setConfirmLogout(false)
     router.push('/login')
   }
+
+  const verified = tier !== 'free'
 
   const grabHandlers = {
     onPointerDown,
@@ -177,11 +199,26 @@ export function CocoBottomNav() {
                 <div className="px-3">
                   <div className="coco-sheet-profile" data-testid="bottom-sheet-user">
                     <span className="coco-sheet-avatar">
-                      <Image src="/coco-ai.jpg" alt="Coco AI" fill sizes="48px" className="object-cover" />
+                      <Image
+                        src="/coco-profile.png"
+                        alt={profile?.name || 'Profile'}
+                        fill
+                        sizes="52px"
+                        className="object-cover"
+                        data-testid="bottom-sheet-avatar"
+                      />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="coco-sub truncate text-[16px] leading-tight text-white" data-testid="bottom-sheet-name">
-                        {profile?.name || 'Trader'}
+                      <p className="coco-sub flex items-center gap-1.5 text-[16px] leading-tight text-white">
+                        <span className="truncate" data-testid="bottom-sheet-name">
+                          {profile?.name || 'Trader'}
+                        </span>
+                        {verified && (
+                          <BadgeCheck
+                            className="h-[15px] w-[15px] flex-none text-[#b48cff]"
+                            data-testid="bottom-sheet-verified-icon"
+                          />
+                        )}
                       </p>
                       <p className="coco-mono mt-1 truncate text-[10.5px] text-white/50" data-testid="bottom-sheet-email">
                         {profile?.email || 'Signed in'}
@@ -189,32 +226,47 @@ export function CocoBottomNav() {
                     </div>
                     <span className="coco-sheet-plan" data-testid="bottom-sheet-plan">
                       <Sparkles className="h-3 w-3" />
-                      {profile?.plan || 'free'}
+                      {TIER_LABEL[tier]}
                     </span>
                   </div>
                 </div>
 
-                <nav className="coco-sheet-grid px-3 pt-3">
-                  {MORE_LINKS.map((l) => (
-                    <Link
-                      key={l.href}
-                      href={l.href}
-                      className={cn('coco-sheet-tile', pathname === l.href && 'is-active')}
-                      data-testid={`bottom-nav-more-${l.href.replace(/\//g, '') || 'home'}`}
-                    >
-                      <span className="coco-sheet-tile-icon">
-                        <l.icon className="h-[19px] w-[19px]" />
-                      </span>
-                      <span className="coco-sheet-tile-label">{l.label}</span>
-                    </Link>
-                  ))}
-                </nav>
+                <div className="px-3 pt-4">
+                  <p className="coco-sheet-eyebrow" data-testid="bottom-sheet-section-title">
+                    <span>Signal tools</span>
+                    <span className="coco-sheet-eyebrow-rule" aria-hidden="true" />
+                    <span className="coco-sheet-eyebrow-count">{MORE_LINKS.length}</span>
+                  </p>
+
+                  <nav className="coco-sheet-rows">
+                    {MORE_LINKS.map((l, i) => (
+                      <Link
+                        key={l.href}
+                        href={l.href}
+                        className={cn('coco-sheet-row', pathname === l.href && 'is-active')}
+                        data-testid={`bottom-nav-more-${l.href.replace(/\//g, '') || 'home'}`}
+                      >
+                        <span className="coco-sheet-row-icon">
+                          <l.icon className="h-[19px] w-[19px]" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="coco-sheet-row-label">{l.label}</span>
+                          <span className="coco-sheet-row-desc">{l.desc}</span>
+                        </span>
+                        <span className="coco-sheet-row-index coco-mono" aria-hidden="true">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <ChevronRight className="coco-sheet-row-chev h-4 w-4" />
+                      </Link>
+                    ))}
+                  </nav>
+                </div>
 
                 <div className="px-3">
                   <span className="coco-sheet-divider" aria-hidden="true" data-testid="bottom-sheet-divider" />
                   <button
                     type="button"
-                    onClick={handleLogout}
+                    onClick={() => setConfirmLogout(true)}
                     className="coco-sheet-logout"
                     data-testid="bottom-nav-logout"
                   >
@@ -338,6 +390,12 @@ export function CocoBottomNav() {
           <span>More</span>
         </button>
       </nav>
+
+      <LogoutConfirm
+        open={confirmLogout}
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={handleLogout}
+      />
     </>
   )
 }

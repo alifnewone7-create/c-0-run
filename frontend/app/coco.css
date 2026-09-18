@@ -540,8 +540,8 @@
 }
 .coco-sheet-avatar {
   position: relative;
-  height: 48px;
-  width: 48px;
+  height: 52px;
+  width: 52px;
   flex: none;
   overflow: hidden;
   border-radius: 16px;
@@ -569,54 +569,233 @@
     rgba(255, 255, 255, 0.28) 0 1px 0 0 inset,
     rgba(109, 59, 255, 0.55) 0 8px 18px -8px;
 }
-.coco-sheet-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+/* Menu sections — labelled list rows so each tool reads clearly */
+.coco-sheet-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px 10px;
+  font-family: var(--font-tech), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(196, 166, 255, 0.85);
 }
-.coco-sheet-tile {
+.coco-sheet-eyebrow-rule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(196, 166, 255, 0.35), rgba(255, 255, 255, 0));
+}
+.coco-sheet-eyebrow-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(196, 166, 255, 0.28);
+  background: rgba(139, 92, 255, 0.16);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #d8c7ff;
+}
+.coco-sheet-rows {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+.coco-sheet-row {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 14px 6px 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
-  color: rgba(255, 255, 255, 0.78);
-  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+  gap: 12px;
+  padding: 11px 12px 11px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018) 70%);
+  color: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+  transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.2s ease;
 }
-.coco-sheet-tile:active {
-  transform: scale(0.96);
+.coco-sheet-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b48cff, #6d3bff);
+  opacity: 0.35;
 }
-.coco-sheet-tile.is-active {
-  border-color: rgba(190, 150, 255, 0.4);
-  background: linear-gradient(180deg, rgba(150, 105, 255, 0.26), rgba(150, 105, 255, 0.08));
+.coco-sheet-row:active {
+  transform: scale(0.985);
+  border-color: rgba(190, 150, 255, 0.36);
+}
+.coco-sheet-row.is-active {
+  border-color: rgba(190, 150, 255, 0.42);
+  background: linear-gradient(100deg, rgba(150, 105, 255, 0.28), rgba(150, 105, 255, 0.06) 78%);
   color: #fff;
 }
-.coco-sheet-tile-icon {
+.coco-sheet-row.is-active::before {
+  opacity: 1;
+}
+.coco-sheet-row-icon {
   display: grid;
   place-items: center;
-  height: 42px;
-  width: 42px;
-  border-radius: 14px;
+  height: 40px;
+  width: 40px;
+  flex: none;
+  border-radius: 13px;
   border: 1px solid rgba(190, 150, 255, 0.22);
   background: rgba(139, 92, 255, 0.14);
   color: #c4a6ff;
   box-shadow: rgba(255, 255, 255, 0.08) 0 1px 0 0 inset;
 }
-.coco-sheet-tile.is-active .coco-sheet-tile-icon {
+.coco-sheet-row.is-active .coco-sheet-row-icon {
   background: linear-gradient(180deg, #9a66ff, #6d3bff);
   border-color: transparent;
   color: #fff;
   box-shadow: rgba(109, 59, 255, 0.55) 0 10px 22px -10px;
 }
-.coco-sheet-tile-label {
-  font-size: 11.5px;
+.coco-sheet-row-label {
+  display: block;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  text-align: center;
   line-height: 1.2;
+}
+.coco-sheet-row-desc {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.48);
+}
+.coco-sheet-row-index {
+  flex: none;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: rgba(196, 166, 255, 0.5);
+}
+.coco-sheet-row-chev {
+  flex: none;
+  color: rgba(255, 255, 255, 0.32);
+  transition: transform 0.22s ease;
+}
+.coco-sheet-row:active .coco-sheet-row-chev {
+  transform: translateX(2px);
+}
+
+/* Log-out confirmation (shared, mobile + desktop) */
+.lgc-root {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.lgc-backdrop {
+  position: absolute;
+  inset: 0;
+  cursor: default;
+  background: rgba(7, 4, 26, 0.68);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  animation: coco-fade-in 0.2s ease both;
+}
+.lgc-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px 20px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(190, 150, 255, 0.22);
+  background: linear-gradient(180deg, #241656 0%, #150c35 58%, #0c0722 100%);
+  box-shadow:
+    rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
+    rgba(5, 2, 18, 0.7) 0 30px 70px -30px;
+  text-align: center;
+  animation: lgc-pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes lgc-pop {
+  from {
+    transform: translate3d(0, 10px, 0) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+.lgc-icon {
+  display: inline-grid;
+  place-items: center;
+  height: 52px;
+  width: 52px;
+  border-radius: 17px;
+  border: 1px solid rgba(255, 106, 122, 0.3);
+  background: rgba(255, 86, 104, 0.15);
+  color: #ff8f9c;
+}
+.lgc-title {
+  margin-top: 14px;
+  font-size: 21px;
+  line-height: 1.15;
+  color: #fff;
+}
+.lgc-copy {
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+}
+.lgc-actions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.lgc-btn {
+  display: inline-flex;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 13px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: filter 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.lgc-btn:active {
+  transform: scale(0.975);
+}
+.lgc-btn:disabled {
+  opacity: 0.6;
+}
+.lgc-btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+}
+.lgc-btn-danger {
+  border: 1px solid rgba(255, 106, 122, 0.4);
+  background: linear-gradient(180deg, #ff6274, #d92a45);
+  color: #fff;
+  box-shadow:
+    rgba(255, 255, 255, 0.26) 0 1px 0 0 inset,
+    rgba(217, 42, 69, 0.5) 0 12px 26px -12px;
+}
+@media (min-width: 768px) {
+  .lgc-card {
+    max-width: 400px;
+    padding: 28px 26px 24px;
+  }
 }
 .coco-sheet-divider {
   display: block;

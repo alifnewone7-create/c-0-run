@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
 import { BadgeCheck, Check, Copy, LogOut, Mail, X } from 'lucide-react'
 import { useAuth, type UserProfile } from '@/components/auth-provider'
+import { LogoutConfirm } from '@/components/coco/logout-confirm'
 import { GlyphTier } from '@/components/dashboard/dash-glyphs'
 import { TIER_LABEL, TIER_DAILY_LIMIT } from '@/lib/tiers'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ export function DashProfileSheet({
   const [mounted, setMounted] = useState(false)
   const [closing, setClosing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const sheetRef = useRef<HTMLDivElement>(null)
   const drag = useRef({ startY: 0, dy: 0, active: false })
 
@@ -167,12 +169,18 @@ export function DashProfileSheet({
             </div>
           </div>
 
-          <button type="button" onClick={handleLogout} className="dsh-sheet-logout" data-testid="profile-sheet-logout">
+          <button type="button" onClick={() => setConfirmLogout(true)} className="dsh-sheet-logout" data-testid="profile-sheet-logout">
             <LogOut className="h-4 w-4" />
             Log out
           </button>
         </div>
       </div>
+
+      <LogoutConfirm
+        open={confirmLogout}
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={handleLogout}
+      />
     </div>,
     document.body,
   )
